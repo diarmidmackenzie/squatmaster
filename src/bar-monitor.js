@@ -112,8 +112,6 @@ AFRAME.registerComponent('bar-monitor', {
         // lifter leaving hooks.
         // may or may not have bar on shoulders.  Determine based on y position.
 
-        this.el.emit('left-hooks')
-
         if (barPosition.y > this.data.hookPosition.y) {
           // bar above hooks - must be on shoulders.
 
@@ -134,6 +132,8 @@ AFRAME.registerComponent('bar-monitor', {
           
           this.state.barOnShoulders = false
         }
+
+        this.el.emit('left-hooks')
       }
       this.state.lifterAtHooks = false
     }
