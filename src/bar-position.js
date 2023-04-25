@@ -28,10 +28,10 @@ AFRAME.registerComponent('bar-position', {
     this.rack = new THREE.Object3D()
     rack = this.rack
 
-    rack.position.set(0, 0, 1)
+    rack.position.set(0, 0, 1.001)
     this.rackInverseTransform = new THREE.Matrix4()
     rack.updateWorldMatrix()
-    rack.matrixWorld.copy(this.rackInverseTransform)
+    this.rackInverseTransform.copy(rack.matrixWorld)
     this.rackInverseTransform.invert()
 
     // now if I apply rackInverseTransform to an object in worldSpace, I get it's transform in rack space.
