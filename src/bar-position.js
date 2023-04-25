@@ -21,6 +21,9 @@ AFRAME.registerComponent('bar-position', {
     this.cameraPosition = new THREE.Vector3()
     this.cameraQuaternion = new THREE.Quaternion()
 
+    // for working
+    this.tempQuaternion = new THREE.Quaternion()
+
     // world position of rack.
     this.rack = new THREE.Object3D()
     rack = this.rack
@@ -28,7 +31,7 @@ AFRAME.registerComponent('bar-position', {
     rack.position.set(0, 0, 1)
     this.rackInverseTransform = new THREE.Matrix4()
     rack.updateWorldMatrix()
-    rack.worldMatrix.copy(this.rackInverseTransform)
+    rack.matrixWorld.copy(this.rackInverseTransform)
     this.rackInverseTransform.invert()
 
     // now if I apply rackInverseTransform to an object in worldSpace, I get it's transform in rack space.
@@ -45,15 +48,16 @@ AFRAME.registerComponent('bar-position', {
 
   getCameraAndBarPosition() {
 
-    const position = this.el.cameraPosition
-    const quaternion = this.el.cameraQuaternion
+    const position = this.cameraPosition
+    const quaternion = this.cameraQuaternion
 
     this.el.sceneEl.camera.getWorldPosition(position);
     this.el.sceneEl.camera.getWorldQuaternion(quaternion);
 
     const rackInverseTransform = this.rackInverseTransform
-    position.applyTransform(rackInverseTransform)
-    quaternion.applyTransform(rackInverseTransform)
+    position.applyMatrix4(rackInverseTransform)
+    this.tempQuaternion.setFromRotationMatrix(rackInverseTransform)
+    quaternion.multiply(this.tempQuaternion)
 
     this.barPosition.addVectors(this.cameraPosition, this.barOffset)
 

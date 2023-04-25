@@ -3,11 +3,11 @@
 // Monitors bar position and generates events when thresholds are hit.
 AFRAME.registerComponent('bar-monitor', {
 
-  dependencies: ['bar-position'],
+  //dependencies: ['bar-position'],
 
   schema: {
     // Position of bar when on hooks (before the lift begins)
-    hookPosition : {type: 'vector3', default: {x: 0, y: 1.5, z: 0.5}},
+    hookPosition : {type: 'vec3', default: {x: 0, y: 1.5, z: 0.5}},
 
     // height of bar when lifter is standing up straight.
     topHeight : {default: 1.7},
@@ -22,7 +22,7 @@ AFRAME.registerComponent('bar-monitor', {
     rackWidth: {default: 1},
 
     // depth (z-direction) of rack in meters
-    rackDepth: {default: 1},
+    rackDepth: {default: 1}
   },
 
   init() {
@@ -71,6 +71,8 @@ AFRAME.registerComponent('bar-monitor', {
 
       this.state.insideRack = false
     }
+
+    return this.state.insideRack
   },
 
   isAtHooks(barPosition) {
@@ -94,7 +96,7 @@ AFRAME.registerComponent('bar-monitor', {
       atHooksFB = true
     }
 
-    return (atHooksLR && atHooksFB)
+    return atHooksLR && atHooksFB
   },
 
   checkIfAtHooks(barPosition) {
@@ -135,6 +137,8 @@ AFRAME.registerComponent('bar-monitor', {
       }
       this.state.lifterAtHooks = false
     }
+
+    return this.state.lifterAtHooks
   },
 
   isAtTop(barPosition) {
@@ -155,15 +159,17 @@ AFRAME.registerComponent('bar-monitor', {
         this.el.emit('hit-top')
       }
 
-      this.state.isAtTop = true
+      this.state.atTop = true
     }
     else {
       if (this.state.atTop) {
         this.el.emit('lowered-from-top')
       }
 
-      this.state.isAtTop = false
+      this.state.atTop = false
     }
+
+    return this.state.atTop
   },
 
   isBelowDepth(barPosition) {
@@ -193,6 +199,8 @@ AFRAME.registerComponent('bar-monitor', {
 
       this.state.belowDepth = false
     }
+
+    return this.state.belowDepth
   },
 
   isBelowSafetyPins(barPosition) {
@@ -226,6 +234,8 @@ AFRAME.registerComponent('bar-monitor', {
 
       this.state.belowSafetyPins = false
     }
+
+    return this.state.belowSafetyPins
   },
 
   tick() {
