@@ -30,7 +30,7 @@ AFRAME.registerComponent('ui-updater', {
 
     this.state = {
       repPhase: 'none',  // one of: none, ready, down, up, rest
-      repsToGo: 0
+      repsToGo: 5
     }
 
     this.insideRackUI = document.querySelector('#inside-rack-ui')
