@@ -14,10 +14,10 @@ AFRAME.registerComponent('bar-monitor', {
     topHeight : {default: 1.7},
 
     // target depth for bar, to achieve parallel thighs.
-    targetDepth: {default: 0.6},
+    targetDepth: {default: 1},
 
     // height of the bar when it hits the safety pins.
-    safetyPinHeight: {default: 0.5},
+    safetyPinHeight: {default: 0.75},
 
     // width of rack in meters
     rackWidth: {default: 1},

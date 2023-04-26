@@ -11,7 +11,7 @@ AFRAME.registerGeometry('squatRack', {
       hookRadiusLarge: {default: 0.04},
       hookDepth: {default: 0.08},
       hookHeight: {default: 1.5},
-      safetyHeight: {default: 0.5},
+      safetyHeight: {default: 0.75},
       safetyRadius: {default: 0.02},
     },
   },
@@ -106,7 +106,7 @@ AFRAME.registerComponent('squat-rack', {
     hookRadiusLarge: {default: 0.04},
     hookDepth: {default: 0.08},
     hookHeight: {default: 1.5},
-    safetyHeight: {default: 0.5},
+    safetyHeight: {default: 0.75},
     safetyRadius: {default: 0.02},
   },
 
