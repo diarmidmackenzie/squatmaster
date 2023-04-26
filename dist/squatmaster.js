@@ -610,39 +610,49 @@ const calibrationUIImages = {
 
 const calibrationUISounds = {
   start: '#sound1',
-  bar: '#sound3',
-  hooks: '#sound4',
-  top: '#sound5', 
+  bar: '#sound4',
+  hooks: '#sound5',
+  top: '#sound7', 
+  depth: '#sound8',
+  safety: '#sound9',
+  review: '#sound10',
+  done: '#sound11',
+}
+
+const calibrationUIFollowOnSounds = {
+  start: '#sound2',
+  hooks: '#sound6',
+  top: '#sound6',
   depth: '#sound6',
-  safety: '#sound7',
-  review: '#sound8',
-  done: '#sound9',
+  safety: '#sound6',
+  done: '#sound12',
 }
 
-const soundUIFollowOnSounds = {
-  start: '#sound2'
+const calibrationUIFollowOnSounds2 = {
+  start: '#sound3'
 }
-
 
 AFRAME.registerComponent('calibration-flow', {
 
   dependencies: ['bar-position'],
 
+  schema: {
+    skip: {default: false} // for testing: skip calibration & just set up with some defaults.
+  },
+
   init() {
 
-    this.nodEvent = this.nodEvent.bind(this)
-    this.shakeEvent = this.shakeEvent.bind(this)
     this.reachedHooks = this.reachedHooks.bind(this)
+    this.forwardEvent = this.forwardEvent.bind(this)
+    this.backEvent = this.backEvent.bind(this)
     
-    this.el.addEventListener('nod', this.nodEvent);
-    this.el.addEventListener('shake', this.shakeEvent);
+    this.el.addEventListener('click-forward', this.forwardEvent);
+    this.el.addEventListener('click-back', this.backEvent);
     this.el.addEventListener('reached-hooks', this.reachedHooks);
 
     // UI state
     this.stage = 'start' // one of: start, hooks, top, depth, safety, review, done
-    this.saving = false
-    this.deleting = false
-
+    
     this.calibrationUI = document.getElementById('calibration-ui')
 
     this.cameraWorldPosition = new THREE.Vector3()
@@ -650,7 +660,19 @@ AFRAME.registerComponent('calibration-flow', {
     this.forwardVector = new THREE.Vector3(0, 0, -1)
     this.directionVector = new THREE.Vector3()
 
-    this.playPrompt(this.stage)
+    this.el.addEventListener('enter-vr', () => {
+      this.playPrompt(this.stage)
+    })
+
+    if (this.data.skip) {
+
+      this.el.setAttribute('bar-monitor', 
+                            `topHeight: 1.6;
+                             targetDepth: 0.9;
+                             safetyPinHeight: 0.75`)
+
+      this.endCalibrationProcess()
+    }
   },
 
   update() {
@@ -658,8 +680,8 @@ AFRAME.registerComponent('calibration-flow', {
   },
 
   remove() {
-    this.el.removeEventListener('nod', this.nodEvent);
-    this.el.removeEventListener('shake', this.shakeEvent);
+    this.el.removeEventListener('click-forward', this.forwardEvent);
+    this.el.removeEventListener('click-back', this.backEvent);
   },
 
   beginCalibrationProcess() {
@@ -681,44 +703,40 @@ AFRAME.registerComponent('calibration-flow', {
     return component.barPosition
   },
 
-  // displays "saving" message for 1 second, then moves to next stage.
   moveToStage(stage) {
 
-    this.saving = true
-    this.updateUI()
-
     this.playPrompt(stage)
-
-    setTimeout(() => {
-      this.stage = stage
-      this.saving = false
-      this.updateUI()
-      
-    }, 1000)
-
+    this.stage = stage
+    this.updateUI()
   },
 
   // equivalent function when moving back a stage...
   moveBackToStage(stage) {
 
-    this.deleting = true
-
     this.playPrompt(stage)
-
-    // short timeout, just to avoid duplicate shakes...
-    setTimeout(() => {
-      this.stage = stage
-      this.deleting = false
-      this.updateUI()
-      
-    }, 500)
+    this.stage = stage
+    this.updateUI()
   },
 
   playPrompt(stage) {
     const origin = document.getElementById('sound-origin')
 
-    origin.setAttribute('sound', {src: calibrationUISounds[stage]})
-    origin.components.sound.playSound();
+    origin.setAttribute('sound', {src: calibrationUISounds[stage], autoplay: true})
+    //origin.components.sound.playSound();
+
+    if (calibrationUIFollowOnSounds[stage]) {
+      setTimeout(() => {
+        origin.setAttribute('sound', {src: calibrationUIFollowOnSounds[stage], autoplay: true})
+        origin.components.sound.playSound();
+      }, 2000)
+    }
+
+    if (calibrationUIFollowOnSounds2[stage]) {
+      setTimeout(() => {
+        origin.setAttribute('sound', {src: calibrationUIFollowOnSounds2[stage], autoplay: true})
+        origin.components.sound.playSound();
+      }, 4000)
+    }
   },
 
   reachedHooks() {
@@ -731,7 +749,7 @@ AFRAME.registerComponent('calibration-flow', {
     }
   },
 
-  nodEvent() {
+  forwardEvent() {
 
     let yPos
 
@@ -805,12 +823,12 @@ AFRAME.registerComponent('calibration-flow', {
         break
 
       default:
-        console.error("Hit Nod in unexpected state: ", this.stage)
+        console.error("Hit Forward in unexpected state: ", this.stage)
         break
     }
   },
 
-  shakeEvent() {
+  backEvent() {
 
     switch (this.stage) {
 
@@ -818,8 +836,12 @@ AFRAME.registerComponent('calibration-flow', {
         // no effect
         break
 
-      case 'hooks':
+      case 'bar':
         this.moveBackToStage('start')
+        break
+
+      case 'hooks':
+        this.moveBackToStage('bar')
         break
   
       case 'top':
@@ -839,21 +861,25 @@ AFRAME.registerComponent('calibration-flow', {
         break
 
       case 'done':
-        // no effect - too late
-        // (TBC - we could desig a flow to restart the whole calibration process again)
+        this.moveBackToStage('review')
         break
          
       default:
-        console.error("Hit Nod in unexpected state: ", this.stage)
+        console.error("Hit Back in unexpected state: ", this.stage)
         break
     }
   },
 
   updateUI() {
 
+    const forward = (this.stage !== 'review') 
+    const back = (this.stage !== 'start')
+
     this.calibrationUI.setAttribute('calibration-ui',
                                      {saving: this.saving,
                                       deleting: this.deleting,
+                                      forwardButton: forward,
+                                      backButton: back,
                                       imageSelector: calibrationUIImages[this.stage]})
   }
 })
@@ -862,28 +888,80 @@ AFRAME.registerComponent('calibration-ui', {
 
   schema: {
     imageSelector: {type: 'string'},
-    saving: {default: false},  // to re-implement
-    deleting: {default: false}, // to re-implement
+    fowardButton: {default: false}, 
+    backButton: {default: false}
   },
 
   init() {
     this.circle = document.createElement('a-entity')
-    this.circle.setAttribute('geometry', 'primitive: circle; radius: 1')
+    this.circle.setAttribute('geometry', 'primitive: circle; radius: 1; segments: 128')
     this.circle.setAttribute('material', 'color: white; opacity: 0.8; transparent: true')
     this.el.appendChild(this.circle)
-
   },
 
-  createImage(src) {
+  update() {
+
+    this.deleteImage()
+    if (this.data.imageSelector) {
+   
+      this.createImage(this.circle, this.data.imageSelector, 2)
+    }
+
+    this.deleteButtons() 
+    this.createButtons()
+  },
+
+  createButtons() {
+
+    if (this.data.forwardButton && !this.data.backButton) {
+      this.forwardButton = this.createButton(0, -1, '#check', 'click-forward')
+    }
+
+    if (!this.data.forwardButton && this.data.backButton) {
+      this.backButton = this.createButton(0, -1, '#cross', 'click-back')
+    }
+
+    if (this.data.forwardButton && this.data.backButton) {
+      this.forwardButton = this.createButton(0.4, -1, '#check', 'click-forward')
+      this.backButton = this.createButton(-0.4, -1, '#cross', 'click-back')
+    }
+  },
+
+  createButton(x, y, imageSrc, eventName) {
+
+    button = document.createElement('a-entity')
+    button.object3D.position.x = x
+    button.object3D.position.y = y
+    button.object3D.position.z = 0.001
+    button.setAttribute('animated-button', {imageSrc: imageSrc, eventName: eventName})
+    this.circle.appendChild(button)
+
+    return button
+  },
+
+  deleteButtons() {
+
+    deleteButton = (el) => {
+      if (el && el.parentNode) {
+        el.parentNode.removeChild(el)
+      }
+    }
+    deleteButton(this.forwardButton)
+    deleteButton(this.backButton)
+    this.forwardButton = null
+    this.backButton = null
+  },
+
+  createImage(parent, src, dimension) {
 
     this.image = document.createElement('a-image')
-    this.image.setAttribute('alpha-test', 0.5)
-    this.image.setAttribute('width', 2)
-    this.image.setAttribute('height', 2)
+    this.image.setAttribute('alpha-test', 0.1)
+    this.image.setAttribute('width', dimension)
+    this.image.setAttribute('height', dimension)
     this.image.setAttribute('transparent', true)
     this.image.object3D.position.z = 0.001
     this.image.setAttribute('src', src)
-    this.circle.appendChild(this.image)
+    parent.appendChild(this.image)
 
   },
 
@@ -893,16 +971,81 @@ AFRAME.registerComponent('calibration-ui', {
       this.image.parentNode.removeChild(this.image)
       this.image = null
     }
-  },
-
-  update() {
-    this.deleteImage()
-    if (this.data.imageSelector) {
-   
-      this.createImage(this.data.imageSelector)
-    }
   }
 });
+
+AFRAME.registerComponent('animated-button', {
+
+  schema: {
+    imageSrc : {type: 'string'},
+    eventName: {type: 'string'}
+  },
+
+  init() {
+
+    const button = document.createElement('a-entity')
+    button.setAttribute('geometry', 'primitive: circle; radius: 0.28; segments: 128')
+    button.setAttribute('material', 'color: white; opacity: 0.8; transparent: true; shader: flat')
+    button.classList.add('clickable');
+    this.el.appendChild(button)
+  
+    const ring = document.createElement('a-ring')
+    ring.setAttribute('radius-inner', 0.28)
+    ring.setAttribute('radius-outer', 0.29)
+    ring.setAttribute('segments-theta', 128)
+    ring.setAttribute('segments-phi', 1)
+    ring.setAttribute('material', 'color: grey; shader: flat')
+    ring.object3D.position.z = 0.001
+    button.appendChild(ring)
+  
+    this.createImage(button, this.data.imageSrc, 0.3)
+  
+    const animatedRing = document.createElement('a-ring')
+    animatedRing.setAttribute('radius-inner', 0.25)
+    animatedRing.setAttribute('radius-outer', 0.32)
+    animatedRing.setAttribute('segments-theta', 128)
+    animatedRing.setAttribute('segments-phi', 1)
+    animatedRing.setAttribute('theta-start', 90)
+    animatedRing.setAttribute('theta-length', 0)
+    animatedRing.setAttribute('scale', '-1 1 1')
+    animatedRing.setAttribute('material', 'color: grey; shader: flat')
+  
+    animatedRing.object3D.position.z = 0.001
+    ring.appendChild(animatedRing)
+  
+    button.addEventListener('fusing', () => {
+      animatedRing.setAttribute('animation', {property: 'geometry.thetaLength',
+                                              from: 0,
+                                              to: 360,
+                                              dur: 1000,
+                                              easing: 'linear'})
+    })
+  
+    button.addEventListener('mouseleave', () => {
+      animatedRing.removeAttribute('animation')
+      animatedRing.setAttribute('geometry', 'thetaLength: 0')
+    })
+  
+    button.addEventListener('click', () => {
+      this.el.sceneEl.emit(this.data.eventName)
+    })
+  },
+
+  createImage(parent, src, dimension) {
+
+    this.image = document.createElement('a-image')
+    this.image.setAttribute('alpha-test', 0.1)
+    this.image.setAttribute('width', dimension)
+    this.image.setAttribute('height', dimension)
+    this.image.setAttribute('transparent', true)
+    this.image.object3D.position.z = 0.001
+    this.image.setAttribute('src', src)
+    parent.appendChild(this.image)
+
+  }
+
+})
+
 
 
 /***/ }),
@@ -916,189 +1059,127 @@ AFRAME.registerComponent('calibration-ui', {
 AFRAME.registerComponent('inside-rack-ui', {
 
   schema: {
+    totalReps: {default: 5},
     repsToGo: {default: 5},
+    width: {default: 4},
     message: {default: ''}
   },
 
   init() {
-    this.circle = document.createElement('a-circle')
-    this.circle.setAttribute('radius', 0.5)
-    this.el.appendChild(this.circle)
 
-    this.text = document.createElement('a-entity')
-    this.text.setAttribute('text', {color: 'black',
-                                    wrapCount: 15,
-                                    align: 'center'})
-    this.circle.appendChild(this.text)
+    this.reps = []
+
+    for (let ii = 0; ii < this.data.totalReps; ii++) {
+      const rep = document.createElement('a-entity')
+      rep.setAttribute('rep-report', {repNumber: ii})
+      const reps = this.data.totalReps
+      rep.object3D.position.x = (ii - (reps - 1) / 2) * (this.data.width / this.data.totalReps)
+      this.el.appendChild(rep)
+      this.reps.push(rep)
+    }
+
+    this.repReport = this.repReport.bind(this)
+
+    this.el.sceneEl.addEventListener('rep-report', this.repReport)
+
   },
 
-  update() {
+  repReport(e) {
 
-    this.text.setAttribute('text', `value: ${this.data.message}\n${this.data.repsToGo} reps to go`)
+    const data = e.detail
+    const {repNumber} = data
 
+    const rep = this.reps[repNumber]
+
+    if (!rep) return // user doing more reps than specified!  We don't report them.
+
+    rep.setAttribute('rep-report', {repNumber: repNumber,
+                                    status: data.completed ? 'done' : 'failed',
+                                    restPrior: data.restPrior,
+                                    timeDown: data.timeDown,
+                                    depth: data.depth,
+                                    timeUp: data.timeUp,
+                                    turnSPeed: data.turnSpeed,
+                                    daviationLR: data.deviationLR, 
+                                    deviationFB: data.deviationFB})
   }
 });
 
-
-/***/ }),
-
-/***/ "./src/nod-shake.js":
-/*!**************************!*\
-  !*** ./src/nod-shake.js ***!
-  \**************************/
-/***/ (() => {
-
-// Add to scene (it finds camera itself)
-// Generates 'nod' and 'shake' events
-
-AFRAME.registerComponent('nod-shake', {
-
+AFRAME.registerComponent('rep-report', {
   schema: {
-    // sensitivity is measured in required cmulative radians of rotation (in either direction)
-    // without any significant movement that is dominated by another axis.
-    // 1 radian = approx 57 degrees
-    // For simplicity, we allow nods in both X & Z axis.  Unlikely to trigger false positives as
-    // head tilt is an unusual movement.  And means we don't need to worry about the camera's Y rotation.
-    // in determining which direction is "nodding"
-    nodSensitivity: {default: 0.5},
-    shakeSensitivity: {default: 0.5},
-    debug: {default: false}
-  },
+    repNumber: { type: 'number'},
+    status: { type: 'string', default: 'todo'}, // one of: todo, doing, done, failed
+    timeDown: {type: 'number'},
+    depth: {type: 'number'},
+    timeUp: {type: 'number'},
+    turnSpeed: {type: 'number'},
+    deviationLR: {type: 'number'},
+    deviationFB: {type: 'number'}
+  }, 
 
   init() {
 
-    this.cameraQuaternion = new THREE.Quaternion
-    this.lastQuaternion = new THREE.Quaternion
-    this.deltaQuaternion = new THREE.Quaternion
-    this.camera = this.el.sceneEl.camera
+    this.circle = document.createElement('a-circle')
+    this.circle.setAttribute('radius', 0.3)
+    this.circle.setAttribute('material', {opacity: 0.8, transparent: true})
+    this.circle.object3D.position.y = 0.5
+    this.el.appendChild(this.circle)
 
-    this.firstFrame = true
+    this.number = document.createElement('a-entity')
+    this.number.setAttribute('text', {color: 'black',
+                                      wrapCount: 5,
+                                      value: this.data.repNumber + 1,
+                                      align: 'center'})
+    this.circle.appendChild(this.number)
 
-    this.cumRotNod = 0
-    this.cumRotShake = 0
-
-    this.debugDisplayCounter = 0
   },
 
   update() {
-    if (this.data.debug) {
-      this.display = document.createElement('a-text')
-      this.display.object3D.position.set(0, 0, -3)
-      this.display.setAttribute('align', 'center')
-      this.display.setAttribute('value', 'Nod/shake debug')
-      this.camera.el.appendChild(this.display)
+
+    this.deleteImage()
+
+    let imgSrc
+    const status = this.data.status
+    if (status === 'done') {
+      imgSrc = '#check'
+    }
+    if (status === 'failed') {
+      imgSrc = '#cross'
+    }
+    if (imgSrc) {
+      this.createImage(this.circle, imgSrc, 0.4)
+    }
+
+    if (status === 'todo' || status === 'doing') {
+      this.number.object3D.visible = true
     }
     else {
-      if (this.display) {
-        this.display.parentNode.removeChild(this.display)
-        this.display = null
-      }
+      this.number.object3D.visible = false
     }
   },
 
-  // primes debug display to reset 1 second after changes stop.
-  primeDebugReset() {
-    this.debugDisplayCounter++
+  createImage(parent, src, dimension) {
 
-    setTimeout(() => {
-      this.debugDisplayCounter--
-      if (this.debugDisplayCounter <= 0) {
-        this.display.setAttribute('text', 'value: Nod/shake debug')
-      }
-    }, 1000)
+    this.image = document.createElement('a-image')
+    this.image.setAttribute('alpha-test', 0.1)
+    this.image.setAttribute('width', dimension)
+    this.image.setAttribute('height', dimension)
+    this.image.setAttribute('transparent', true)
+    this.image.object3D.position.z = 0.001
+    this.image.setAttribute('src', src)
+    parent.appendChild(this.image)
+
   },
 
-  tick() {
+  deleteImage() {
 
-    // avoid false positives at start of day
-    if (this.firstFrame) {
-      this.firstFrame = false
-      return
+    if (this.image) {
+      this.image.parentNode.removeChild(this.image)
+      this.image = null
     }
-
-    const quaternion = this.cameraQuaternion
-    const delta = this.deltaQuaternion
-
-    this.el.sceneEl.camera.getWorldQuaternion(quaternion);
-
-    // compute delta quaternion from last frame to this frame
-    delta.copy(this.lastQuaternion)
-    delta.invert()
-    delta.premultiply(quaternion)
-
-    // Convert to axis and angle as described here.
-    // https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToAngle/index.htm   
-    delta.normalize()
-    const s = Math.sqrt(1-delta.w*delta.w)
-    if (s < 0.0001) {
-      // no significant movement
-    }
-    else {
-
-      const angle = 2 * Math.acos(delta.w)
-      const absAngle = Math.abs(angle)
-      console.log("Absolute angle of rotation: ", absAngle)
-
-      let x = delta.x
-      let y = delta.y
-      let z = delta.z
-
-      if (Math.abs(x) >= Math.abs(y) && Math.abs(x) >= Math.abs(z)) {
-        // x axis dominant
-        this.cumRotNod += absAngle
-        this.cumRotShake = 0
-        
-        if (this.data.debug) {
-          console.log("X-axis dominant.  Accumulated nod rotation:", this.cumRotNod)
-        }
-      }
-      else if (Math.abs(y) >= Math.abs(x) && Math.abs(y) >= Math.abs(z)) {
-        // y axis dominant
-        this.cumRotNod = 0
-        this.cumRotShake += absAngle
-        
-        if (this.data.debug) {
-          console.log("Y-axis dominant.  Accumulated shake rotation:", this.cumRotShake)
-        }
-      }
-      else {
-        // z-axis dominant
-        this.cumRotNod += absAngle
-        this.cumRotShake = 0
-
-        if (this.data.debug) {
-          console.log("Z-axis dominant.  Accumulated nod rotation:", this.cumRotNod)
-        }
-      }
-    }
-
-    // has any cumulative rotation broken threshold?
-    if (this.cumRotNod > this.data.nodSensitivity) {
-      this.el.emit("nod")
-      this.cumRotNod = 0
-
-      if (this.data.debug) {
-        console.log("Emitted nod event")
-        this.display.setAttribute('text', 'value: Detected nod')
-        this.primeDebugReset()
-      }
-    }
-
-    if (this.cumRotShake > this.data.shakeSensitivity) {
-      this.el.emit("shake")
-      this.cumRotShake = 0
-
-      if (this.data.debug) {
-        console.log("Emitted shake event")
-        this.display.setAttribute('text', 'value: Detected shake')
-        this.primeDebugReset()
-      }
-    }
-
-    // save off this quaternion for analysis next frame
-    this.lastQuaternion.copy(quaternion)
   }
 })
+
 
 /***/ }),
 
@@ -1355,12 +1436,24 @@ AFRAME.registerComponent('ui-updater', {
 
     this.state = {
       repPhase: 'none',  // one of: none, ready, down, up, rest
+      repNumber: 0,
       repsToGo: 5
     }
 
     this.insideRackUI = document.querySelector('#inside-rack-ui')
     this.outsideRackUI = document.querySelector('#outside-rack-ui')
 
+    this.repData = {
+      repNumber: 0,
+      completed: false,
+      restPrior: 0,
+      timeDown: 0,
+      depth: 0,
+      timeUp: 0,
+      turnSpeed: 0,
+      deviationLR: 0,
+      deviationFB: 0
+    }
   },
 
   remove() {
@@ -1382,9 +1475,14 @@ AFRAME.registerComponent('ui-updater', {
     this.insideRackUI.setAttribute('inside-rack-ui', {repsToGo: this.state.repsToGo})
   },
 
-  repCompleted() {
+  repCompleted(completed) {
 
+    // !! Still need to fill in rep data.
+    this.repData.completed = completed
+    this.repData.repNumber = this.state.repNumber
+    this.el.emit('rep-report', this.repData)
     this.state.repsToGo--
+    this.state.repNumber++
     this.insideRackUI.setAttribute('inside-rack-ui', {repsToGo: this.state.repsToGo})
   },
 
@@ -1427,7 +1525,7 @@ AFRAME.registerComponent('ui-updater', {
       case 'up':
         this.state.repPhase = 'rest'
         this.setMessage('Rep Complete')
-        this.repCompleted()
+        this.repCompleted(true)
         break
 
       default: 
@@ -1504,6 +1602,7 @@ AFRAME.registerComponent('ui-updater', {
   },
 
   bailedOut() {
+    this.repCompleted(false)
     this.setMessage('Failed set.  Step out of rack and remove weight plates from bar.')
   }
 })
@@ -1605,7 +1704,7 @@ __webpack_require__(/*! ./src/in-rack-ui.js */ "./src/in-rack-ui.js")
 __webpack_require__(/*! ./src/ui-updater.js */ "./src/ui-updater.js")
 __webpack_require__(/*! ./src/squat-rack.js */ "./src/squat-rack.js")
 __webpack_require__(/*! ./src/vertical-controls.js */ "./src/vertical-controls.js")
-__webpack_require__(/*! ./src/nod-shake.js */ "./src/nod-shake.js")
+//require('./src/nod-shake.js')
 __webpack_require__(/*! ./src/calibration-flow */ "./src/calibration-flow.js")
 __webpack_require__(/*! ./src/ui-manager */ "./src/ui-manager.js")
 __webpack_require__(/*! aframe-polygon-wireframe */ "./node_modules/aframe-polygon-wireframe/index.js")
