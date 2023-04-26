@@ -11,17 +11,26 @@ const calibrationUIImages = {
 
 const calibrationUISounds = {
   start: '#sound1',
-  bar: '#sound3',
-  hooks: '#sound4',
-  top: '#sound5', 
-  depth: '#sound6',
-  safety: '#sound7',
-  review: '#sound8',
-  done: '#sound9',
+  bar: '#sound4',
+  hooks: '#sound5',
+  top: '#sound7', 
+  depth: '#sound8',
+  safety: '#sound9',
+  review: '#sound10',
+  done: '#sound11',
 }
 
 const calibrationUIFollowOnSounds = {
-  start: '#sound2'
+  start: '#sound2',
+  hooks: '#sound6',
+  top: '#sound6',
+  depth: '#sound6',
+  safety: '#sound6',
+  done: '#sound12',
+}
+
+const calibrationUIFollowOnSounds2 = {
+  start: '#sound3'
 }
 
 AFRAME.registerComponent('calibration-flow', {
@@ -107,6 +116,13 @@ AFRAME.registerComponent('calibration-flow', {
         origin.setAttribute('sound', {src: calibrationUIFollowOnSounds[stage], autoplay: true})
         origin.components.sound.playSound();
       }, 2000)
+    }
+
+    if (calibrationUIFollowOnSounds2[stage]) {
+      setTimeout(() => {
+        origin.setAttribute('sound', {src: calibrationUIFollowOnSounds2[stage], autoplay: true})
+        origin.components.sound.playSound();
+      }, 4000)
     }
   },
 
