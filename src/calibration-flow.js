@@ -29,6 +29,11 @@ AFRAME.registerComponent('calibration-flow', {
     this.deleting = false
 
     this.calibrationUI = document.getElementById('calibration-ui')
+
+    this.cameraWorldPosition = new THREE.Vector3()
+    this.cameraWorldQuaternion = new THREE.Quaternion()
+    this.forwardVector = new THREE.Vector3(0, 0, -1)
+    this.directionVector = new THREE.Vector3()
   },
 
   update() {
@@ -102,7 +107,29 @@ AFRAME.registerComponent('calibration-flow', {
     switch (this.stage) {
 
       case 'start':
-        // no data to record yet.
+        // At this nod, we set the position of '#rack' to the current headset position (x & z co-ords only)
+        const rack = document.querySelector('#rack')
+        const position = this.cameraWorldPosition
+        const quaternion = this.cameraWorldQuaternion
+
+        this.el.sceneEl.camera.getWorldPosition(position);
+        this.el.sceneEl.camera.getWorldQuaternion(quaternion);
+        rack.object3D.position.x = position.x
+        rack.object3D.position.y = 0
+        rack.object3D.position.z = position.z
+
+        // rotate forward vector by quaternion, zero out y axis component, then find
+        // quaternion that rotates forward to this vector.
+        // That's the vector to use for the rack orientation
+        const forward = this.forwardVector
+        const direction = this.directionVector
+        direction.copy(forward)
+        direction.applyQuaternion(quaternion)
+        direction.y = 0
+        direction.normalize()
+
+        rack.object3D.quaternion.setFromUnitVectors(forward, direction)
+
         this.moveToStage('bar')
         break
 
