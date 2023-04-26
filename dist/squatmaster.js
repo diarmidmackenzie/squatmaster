@@ -608,6 +608,22 @@ const calibrationUIImages = {
   done: '#calibration7',
 }
 
+const calibrationUISounds = {
+  start: '#sound1',
+  bar: '#sound3',
+  hooks: '#sound4',
+  top: '#sound5', 
+  depth: '#sound6',
+  safety: '#sound7',
+  review: '#sound8',
+  done: '#sound9',
+}
+
+const soundUIFollowOnSounds = {
+  start: '#sound2'
+}
+
+
 AFRAME.registerComponent('calibration-flow', {
 
   dependencies: ['bar-position'],
@@ -628,6 +644,13 @@ AFRAME.registerComponent('calibration-flow', {
     this.deleting = false
 
     this.calibrationUI = document.getElementById('calibration-ui')
+
+    this.cameraWorldPosition = new THREE.Vector3()
+    this.cameraWorldQuaternion = new THREE.Quaternion()
+    this.forwardVector = new THREE.Vector3(0, 0, -1)
+    this.directionVector = new THREE.Vector3()
+
+    this.playPrompt(this.stage)
   },
 
   update() {
@@ -664,11 +687,15 @@ AFRAME.registerComponent('calibration-flow', {
     this.saving = true
     this.updateUI()
 
+    this.playPrompt(stage)
+
     setTimeout(() => {
       this.stage = stage
       this.saving = false
       this.updateUI()
+      
     }, 1000)
+
   },
 
   // equivalent function when moving back a stage...
@@ -676,12 +703,22 @@ AFRAME.registerComponent('calibration-flow', {
 
     this.deleting = true
 
+    this.playPrompt(stage)
+
     // short timeout, just to avoid duplicate shakes...
     setTimeout(() => {
       this.stage = stage
       this.deleting = false
       this.updateUI()
+      
     }, 500)
+  },
+
+  playPrompt(stage) {
+    const origin = document.getElementById('sound-origin')
+
+    origin.setAttribute('sound', {src: calibrationUISounds[stage]})
+    origin.components.sound.playSound();
   },
 
   reachedHooks() {
@@ -701,7 +738,29 @@ AFRAME.registerComponent('calibration-flow', {
     switch (this.stage) {
 
       case 'start':
-        // no data to record yet.
+        // At this nod, we set the position of '#rack' to the current headset position (x & z co-ords only)
+        const rack = document.querySelector('#rack')
+        const position = this.cameraWorldPosition
+        const quaternion = this.cameraWorldQuaternion
+
+        this.el.sceneEl.camera.getWorldPosition(position);
+        this.el.sceneEl.camera.getWorldQuaternion(quaternion);
+        rack.object3D.position.x = position.x
+        rack.object3D.position.y = 0
+        rack.object3D.position.z = position.z
+
+        // rotate forward vector by quaternion, zero out y axis component, then find
+        // quaternion that rotates forward to this vector.
+        // That's the vector to use for the rack orientation
+        const forward = this.forwardVector
+        const direction = this.directionVector
+        direction.copy(forward)
+        direction.applyQuaternion(quaternion)
+        direction.y = 0
+        direction.normalize()
+
+        rack.object3D.quaternion.setFromUnitVectors(forward, direction)
+
         this.moveToStage('bar')
         break
 
@@ -812,9 +871,6 @@ AFRAME.registerComponent('calibration-ui', {
     this.circle.setAttribute('geometry', 'primitive: circle; radius: 1')
     this.circle.setAttribute('material', 'color: white; opacity: 0.8; transparent: true')
     this.el.appendChild(this.circle)
-
-    
-
 
   },
 

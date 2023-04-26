@@ -9,6 +9,22 @@ const calibrationUIImages = {
   done: '#calibration7',
 }
 
+const calibrationUISounds = {
+  start: '#sound1',
+  bar: '#sound3',
+  hooks: '#sound4',
+  top: '#sound5', 
+  depth: '#sound6',
+  safety: '#sound7',
+  review: '#sound8',
+  done: '#sound9',
+}
+
+const calibrationUIFollowOnSounds = {
+  start: '#sound2'
+}
+
+
 AFRAME.registerComponent('calibration-flow', {
 
   dependencies: ['bar-position'],
@@ -34,6 +50,10 @@ AFRAME.registerComponent('calibration-flow', {
     this.cameraWorldQuaternion = new THREE.Quaternion()
     this.forwardVector = new THREE.Vector3(0, 0, -1)
     this.directionVector = new THREE.Vector3()
+
+    this.el.addEventListener('enter-vr', () => {
+      this.playPrompt(this.stage)
+    })
   },
 
   update() {
@@ -70,10 +90,13 @@ AFRAME.registerComponent('calibration-flow', {
     this.saving = true
     this.updateUI()
 
+    this.playPrompt(stage)
+
     setTimeout(() => {
       this.stage = stage
       this.saving = false
       this.updateUI()
+      
     }, 1000)
   },
 
@@ -82,12 +105,29 @@ AFRAME.registerComponent('calibration-flow', {
 
     this.deleting = true
 
+    this.playPrompt(stage)
+
     // short timeout, just to avoid duplicate shakes...
     setTimeout(() => {
       this.stage = stage
       this.deleting = false
       this.updateUI()
+      
     }, 500)
+  },
+
+  playPrompt(stage) {
+    const origin = document.getElementById('sound-origin')
+
+    origin.setAttribute('sound', {src: calibrationUISounds[stage], autoplay: true})
+    //origin.components.sound.playSound();
+
+    if (calibrationUIFollowOnSounds[stage]) {
+      setTimeout(() => {
+        origin.setAttribute('sound', {src: calibrationUIFollowOnSounds[stage], autoplay: true})
+        origin.components.sound.playSound();
+      }, 2000)
+    }
   },
 
   reachedHooks() {
@@ -240,9 +280,6 @@ AFRAME.registerComponent('calibration-ui', {
     this.circle.setAttribute('geometry', 'primitive: circle; radius: 1')
     this.circle.setAttribute('material', 'color: white; opacity: 0.8; transparent: true')
     this.el.appendChild(this.circle)
-
-    
-
 
   },
 
