@@ -10,8 +10,8 @@ AFRAME.registerComponent('nod-shake', {
     // For simplicity, we allow nods in both X & Z axis.  Unlikely to trigger false positives as
     // head tilt is an unusual movement.  And means we don't need to worry about the camera's Y rotation.
     // in determining which direction is "nodding"
-    nodSensitivity: {default: 0.5},
-    shakeSensitivity: {default: 0.5},
+    nodSensitivity: {default: 0.25},
+    shakeSensitivity: {default: 0.25},
     debug: {default: false}
   },
 

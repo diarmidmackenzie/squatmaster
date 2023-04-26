@@ -173,13 +173,13 @@ AFRAME.registerComponent('bar-monitor', {
     hookPosition : {type: 'vec3', default: {x: 0, y: 1.5, z: -0.5}},
 
     // height of bar when lifter is standing up straight.
-    topHeight : {default: 1.6},
+    topHeight : {default: 0},
 
     // target depth for bar, to achieve parallel thighs.
-    targetDepth: {default: 1},
+    targetDepth: {default: 0},
 
     // height of the bar when it hits the safety pins.
-    safetyPinHeight: {default: 0.75},
+    safetyPinHeight: {default: 0},
 
     // width of rack in meters
     rackWidth: {default: 1},
@@ -187,10 +187,11 @@ AFRAME.registerComponent('bar-monitor', {
     // depth (z-direction) of rack in meters
     rackDepth: {default: 1},
 
+    // whether to show planes
     showPlanes: {default: true},
 
+    // opacity of planes (if used)
     opacity: {default: 0.3}
-
 
   },
 
@@ -208,18 +209,21 @@ AFRAME.registerComponent('bar-monitor', {
 
   update() {
     this.deletePlanes()
-    this.createPlanes()
+
+    if (this.data.showPlanes) {
+      this.createPlanes()
+    }
   },
 
   createPlanes() {
 
     this.aboveTopPlane = this.createPlane(this.data.topHeight, 'outline', 'white')
-    this.topPlaneUpwards = this.createPlane(this.data.topHeight - 0.05, 'transparent', 'yellow', 'front')
-    this.topPlaneDownwards = this.createPlane(this.data.topHeight - 0.05, 'transparent', 'green', 'back')
-    this.depthPlaneUpwards = this.createPlane(this.data.targetDepth, 'transparent', 'green', 'front')
-    this.depthPlaneDownwards = this.createPlane(this.data.targetDepth, 'transparent', 'yellow', 'back')
+    this.topPlaneUpwards = this.createPlane(this.data.topHeight - 0.05, 'outline', 'green')
+    //this.topPlaneDownwards = this.createPlane(this.data.topHeight - 0.05, , 'outline', 'white')
+    this.depthPlaneUpwards = this.createPlane(this.data.targetDepth, 'outline', 'green')
+    //this.depthPlaneDownwards = this.createPlane(this.data.targetDepth, , 'outline', 'white')
     this.safetyPlaneTop = this.createPlane(this.data.safetyPinHeight, 'outline', 'orange')
-    this.safetyPlaneBottom = this.createPlane(this.data.safetyPinHeight, 'outline', 'red')
+    this.safetyPlaneBottom = this.createPlane(this.data.safetyPinHeight - 0.05, 'outline', 'red')
   },
 
   deletePlanes() {
@@ -882,8 +886,8 @@ AFRAME.registerComponent('nod-shake', {
     // For simplicity, we allow nods in both X & Z axis.  Unlikely to trigger false positives as
     // head tilt is an unusual movement.  And means we don't need to worry about the camera's Y rotation.
     // in determining which direction is "nodding"
-    nodSensitivity: {default: 0.5},
-    shakeSensitivity: {default: 0.5},
+    nodSensitivity: {default: 0.25},
+    shakeSensitivity: {default: 0.25},
     debug: {default: false}
   },
 
