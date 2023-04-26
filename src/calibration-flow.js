@@ -248,8 +248,7 @@ AFRAME.registerComponent('calibration-flow', {
         break
 
       case 'done':
-        // no effect - too late
-        // (TBC - we could desig a flow to restart the whole calibration process again)
+        this.moveBackToStage('review')
         break
          
       default:
