@@ -109,17 +109,25 @@ AFRAME.registerComponent('ui-updater', {
       case 'none':
         this.state.repPhase = 'ready'
         this.setMessage('Ready!')
+        this.playPrompt('#sound-here-we-go')
         break
 
       case 'down':
         this.state.repPhase = 'rest'
         this.setMessage('Incomplete Rep')
+        this.playPrompt('#sound-not-quite')
         break
 
       case 'up':
         this.state.repPhase = 'rest'
         this.setMessage('Rep Complete')
         this.repCompleted(true)
+        if (this.state.repsToGo === 1) {
+          this.playPrompt('#sound-last-one') 
+        }
+        else {
+          this.playPrompt('#sound-nice')
+        }
         break
 
       default: 
@@ -198,5 +206,11 @@ AFRAME.registerComponent('ui-updater', {
   bailedOut() {
     this.repCompleted(false)
     this.setMessage('Failed set.  Step out of rack and remove weight plates from bar.')
-  }
+  playPrompt(src) {
+    const origin = document.getElementById('sound-origin')
+
+    origin.removeAttribute('sound')
+    origin.setAttribute('sound', {src: src, autoplay: true})
+  },
+
 })
