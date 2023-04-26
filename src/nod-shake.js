@@ -11,7 +11,7 @@ AFRAME.registerComponent('nod-shake', {
     // head tilt is an unusual movement.  And means we don't need to worry about the camera's Y rotation.
     // in determining which direction is "nodding"
     nodSensitivity: {default: 0.5},
-    shakeSensitivity: {default: 1},
+    shakeSensitivity: {default: 0.5},
     debug: {default: false}
   },
 
