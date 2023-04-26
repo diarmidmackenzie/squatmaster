@@ -24,26 +24,23 @@ const calibrationUIFollowOnSounds = {
   start: '#sound2'
 }
 
-
 AFRAME.registerComponent('calibration-flow', {
 
   dependencies: ['bar-position'],
 
   init() {
 
-    this.nodEvent = this.nodEvent.bind(this)
-    this.shakeEvent = this.shakeEvent.bind(this)
     this.reachedHooks = this.reachedHooks.bind(this)
+    this.forwardEvent = this.forwardEvent.bind(this)
+    this.backEvent = this.backEvent.bind(this)
     
-    this.el.addEventListener('nod', this.nodEvent);
-    this.el.addEventListener('shake', this.shakeEvent);
+    this.el.addEventListener('click-forward', this.forwardEvent);
+    this.el.addEventListener('click-back', this.backEvent);
     this.el.addEventListener('reached-hooks', this.reachedHooks);
 
     // UI state
     this.stage = 'start' // one of: start, hooks, top, depth, safety, review, done
-    this.saving = false
-    this.deleting = false
-
+    
     this.calibrationUI = document.getElementById('calibration-ui')
 
     this.cameraWorldPosition = new THREE.Vector3()
@@ -61,8 +58,8 @@ AFRAME.registerComponent('calibration-flow', {
   },
 
   remove() {
-    this.el.removeEventListener('nod', this.nodEvent);
-    this.el.removeEventListener('shake', this.shakeEvent);
+    this.el.removeEventListener('click-forward', this.forwardEvent);
+    this.el.removeEventListener('click-back', this.backEvent);
   },
 
   beginCalibrationProcess() {
@@ -84,36 +81,19 @@ AFRAME.registerComponent('calibration-flow', {
     return component.barPosition
   },
 
-  // displays "saving" message for 1 second, then moves to next stage.
   moveToStage(stage) {
 
-    this.saving = true
-    this.updateUI()
-
     this.playPrompt(stage)
-
-    setTimeout(() => {
-      this.stage = stage
-      this.saving = false
-      this.updateUI()
-      
-    }, 1000)
+    this.stage = stage
+    this.updateUI()
   },
 
   // equivalent function when moving back a stage...
   moveBackToStage(stage) {
 
-    this.deleting = true
-
     this.playPrompt(stage)
-
-    // short timeout, just to avoid duplicate shakes...
-    setTimeout(() => {
-      this.stage = stage
-      this.deleting = false
-      this.updateUI()
-      
-    }, 500)
+    this.stage = stage
+    this.updateUI()
   },
 
   playPrompt(stage) {
@@ -140,7 +120,7 @@ AFRAME.registerComponent('calibration-flow', {
     }
   },
 
-  nodEvent() {
+  forwardEvent() {
 
     let yPos
 
@@ -214,12 +194,12 @@ AFRAME.registerComponent('calibration-flow', {
         break
 
       default:
-        console.error("Hit Nod in unexpected state: ", this.stage)
+        console.error("Hit Forward in unexpected state: ", this.stage)
         break
     }
   },
 
-  shakeEvent() {
+  backEvent() {
 
     switch (this.stage) {
 
@@ -227,8 +207,12 @@ AFRAME.registerComponent('calibration-flow', {
         // no effect
         break
 
-      case 'hooks':
+      case 'bar':
         this.moveBackToStage('start')
+        break
+
+      case 'hooks':
+        this.moveBackToStage('bar')
         break
   
       case 'top':
@@ -253,16 +237,21 @@ AFRAME.registerComponent('calibration-flow', {
         break
          
       default:
-        console.error("Hit Nod in unexpected state: ", this.stage)
+        console.error("Hit Back in unexpected state: ", this.stage)
         break
     }
   },
 
   updateUI() {
 
+    const forward = (this.stage !== 'review') 
+    const back = (this.stage !== 'start')
+
     this.calibrationUI.setAttribute('calibration-ui',
                                      {saving: this.saving,
                                       deleting: this.deleting,
+                                      forwardButton: forward,
+                                      backButton: back,
                                       imageSelector: calibrationUIImages[this.stage]})
   }
 })
@@ -271,28 +260,76 @@ AFRAME.registerComponent('calibration-ui', {
 
   schema: {
     imageSelector: {type: 'string'},
-    saving: {default: false},  // to re-implement
-    deleting: {default: false}, // to re-implement
+    fowardButton: {default: false}, 
+    backButton: {default: false}
   },
 
   init() {
     this.circle = document.createElement('a-entity')
-    this.circle.setAttribute('geometry', 'primitive: circle; radius: 1')
+    this.circle.setAttribute('geometry', 'primitive: circle; radius: 1; segments: 128')
     this.circle.setAttribute('material', 'color: white; opacity: 0.8; transparent: true')
     this.el.appendChild(this.circle)
-
   },
 
-  createImage(src) {
+  update() {
+
+    this.deleteImage()
+    if (this.data.imageSelector) {
+   
+      this.createImage(this.circle, this.data.imageSelector, 2)
+    }
+
+    this.deleteButtons() 
+    this.createButtons()
+  },
+
+  createButtons() {
+
+    if (this.data.forwardButton && !this.data.backButton) {
+      this.forwardButton = this.createButton(0, -1, '#check', 'click-forward')
+    }
+
+    if (this.data.forwardButton && this.data.backButton) {
+      this.forwardButton = this.createButton(0.4, -1, '#check', 'click-forward')
+      this.backButton = this.createButton(-0.4, -1, '#cross', 'click-back')
+    }
+  },
+
+  createButton(x, y, imageSrc, eventName) {
+
+    button = document.createElement('a-entity')
+    button.object3D.position.x = x
+    button.object3D.position.y = y
+    button.object3D.position.z = 0.001
+    button.setAttribute('animated-button', {imageSrc: imageSrc, eventName: eventName})
+    this.circle.appendChild(button)
+
+    return button
+  },
+
+  deleteButtons() {
+
+    deleteButton = (el) => {
+      if (el && el.parentNode) {
+        el.parentNode.removeChild(el)
+      }
+    }
+    deleteButton(this.forwardButton)
+    deleteButton(this.backButton)
+    this.forwardButton = null
+    this.backButton = null
+  },
+
+  createImage(parent, src, dimension) {
 
     this.image = document.createElement('a-image')
-    this.image.setAttribute('alpha-test', 0.5)
-    this.image.setAttribute('width', 2)
-    this.image.setAttribute('height', 2)
+    this.image.setAttribute('alpha-test', 0.1)
+    this.image.setAttribute('width', dimension)
+    this.image.setAttribute('height', dimension)
     this.image.setAttribute('transparent', true)
     this.image.object3D.position.z = 0.001
     this.image.setAttribute('src', src)
-    this.circle.appendChild(this.image)
+    parent.appendChild(this.image)
 
   },
 
@@ -302,13 +339,78 @@ AFRAME.registerComponent('calibration-ui', {
       this.image.parentNode.removeChild(this.image)
       this.image = null
     }
-  },
-
-  update() {
-    this.deleteImage()
-    if (this.data.imageSelector) {
-   
-      this.createImage(this.data.imageSelector)
-    }
   }
 });
+
+AFRAME.registerComponent('animated-button', {
+
+  schema: {
+    imageSrc : {type: 'string'},
+    eventName: {type: 'string'}
+  },
+
+  init() {
+
+    const button = document.createElement('a-entity')
+    button.setAttribute('geometry', 'primitive: circle; radius: 0.28; segments: 128')
+    button.setAttribute('material', 'color: white; opacity: 0.8; transparent: true; shader: flat')
+    button.classList.add('clickable');
+    this.el.appendChild(button)
+  
+    const ring = document.createElement('a-ring')
+    ring.setAttribute('radius-inner', 0.28)
+    ring.setAttribute('radius-outer', 0.29)
+    ring.setAttribute('segments-theta', 128)
+    ring.setAttribute('segments-phi', 1)
+    ring.setAttribute('material', 'color: grey; shader: flat')
+    ring.object3D.position.z = 0.001
+    button.appendChild(ring)
+  
+    this.createImage(button, this.data.imageSrc, 0.3)
+  
+    const animatedRing = document.createElement('a-ring')
+    animatedRing.setAttribute('radius-inner', 0.25)
+    animatedRing.setAttribute('radius-outer', 0.32)
+    animatedRing.setAttribute('segments-theta', 128)
+    animatedRing.setAttribute('segments-phi', 1)
+    animatedRing.setAttribute('theta-start', 90)
+    animatedRing.setAttribute('theta-length', 0)
+    animatedRing.setAttribute('scale', '-1 1 1')
+    animatedRing.setAttribute('material', 'color: grey; shader: flat')
+  
+    animatedRing.object3D.position.z = 0.001
+    ring.appendChild(animatedRing)
+  
+    button.addEventListener('fusing', () => {
+      animatedRing.setAttribute('animation', {property: 'geometry.thetaLength',
+                                              from: 0,
+                                              to: 360,
+                                              dur: 1000,
+                                              easing: 'linear'})
+    })
+  
+    button.addEventListener('mouseleave', () => {
+      animatedRing.removeAttribute('animation')
+      animatedRing.setAttribute('geometry', 'thetaLength: 0')
+    })
+  
+    button.addEventListener('click', () => {
+      this.el.sceneEl.emit(this.data.eventName)
+    })
+  },
+
+  createImage(parent, src, dimension) {
+
+    this.image = document.createElement('a-image')
+    this.image.setAttribute('alpha-test', 0.1)
+    this.image.setAttribute('width', dimension)
+    this.image.setAttribute('height', dimension)
+    this.image.setAttribute('transparent', true)
+    this.image.object3D.position.z = 0.001
+    this.image.setAttribute('src', src)
+    parent.appendChild(this.image)
+
+  }
+
+})
+
