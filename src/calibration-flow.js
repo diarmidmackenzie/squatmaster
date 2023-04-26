@@ -305,6 +305,10 @@ AFRAME.registerComponent('calibration-ui', {
       this.forwardButton = this.createButton(0, -1, '#check', 'click-forward')
     }
 
+    if (!this.data.forwardButton && this.data.backButton) {
+      this.backButton = this.createButton(0, -1, '#cross', 'click-back')
+    }
+
     if (this.data.forwardButton && this.data.backButton) {
       this.forwardButton = this.createButton(0.4, -1, '#check', 'click-forward')
       this.backButton = this.createButton(-0.4, -1, '#cross', 'click-back')
