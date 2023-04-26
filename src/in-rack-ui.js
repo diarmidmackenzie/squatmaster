@@ -1,4 +1,4 @@
-AFRAME.registerComponent('in-rack-ui', {
+AFRAME.registerComponent('inside-rack-ui', {
 
   schema: {
     repsToGo: {default: 5},
@@ -11,7 +11,7 @@ AFRAME.registerComponent('in-rack-ui', {
     this.el.appendChild(this.circle)
 
     this.text = document.createElement('a-entity')
-    this.text.setAttribute('text', {color:  'black',
+    this.text.setAttribute('text', {color: 'black',
                                     wrapCount: 15,
                                     align: 'center'})
     this.circle.appendChild(this.text)

@@ -11,7 +11,7 @@ AFRAME.registerComponent('bar-monitor', {
     hookPosition : {type: 'vec3', default: {x: 0, y: 1.5, z: -0.5}},
 
     // height of bar when lifter is standing up straight.
-    topHeight : {default: 1.7},
+    topHeight : {default: 1.6},
 
     // target depth for bar, to achieve parallel thighs.
     targetDepth: {default: 1},

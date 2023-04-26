@@ -5,7 +5,13 @@
     <script src="./dist/squatmaster.js"></script>
   </head>
   <body>
-    <a-scene background="color: #88f" bar-position bar-monitor ui-updater nod-shake="debug: true">
+    <a-scene background="color: #88f"
+             bar-position
+             bar-monitor
+             ui-updater
+             nod-shake
+             ui-manager
+             calibration-flow>
 
       <!-- default camera; no movement controls - not suitable for MR-->
       <!-- WASD controls useful for debugging on desktop -->
@@ -13,8 +19,9 @@
 
       <a-entity id="rack" squat-rack position="0 0 -1"></a-entity>
 
-      <a-entity id="inside-rack-ui" position="0 1 -4" in-rack-ui></a-entity>
-      <a-entity id="outside-rack-ui" position="0 1 -2" out-rack-ui visible="false"></a-entity>
+      <a-entity id="inside-rack-ui" position="0 1 -4" inside-rack-ui visible="false"></a-entity>
+      <a-entity id="calibration-ui" position="0 1 -4" calibration-ui visible="true"></a-entity>
+      <a-entity id="outside-rack-ui" position="0 1 -2" outside-rack-ui visible="false"></a-entity>
     </a-scene>
   </body>
 </html>
