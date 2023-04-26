@@ -3,11 +3,12 @@
 // Monitors bar position and generates events when thresholds are hit.
 AFRAME.registerComponent('bar-monitor', {
 
-  //dependencies: ['bar-position'],
+  dependencies: ['bar-position'],
 
   schema: {
     // Position of bar when on hooks (before the lift begins)
-    hookPosition : {type: 'vec3', default: {x: 0, y: 1.5, z: 0.5}},
+    // Co-ordinates in rack space.
+    hookPosition : {type: 'vec3', default: {x: 0, y: 1.5, z: -0.5}},
 
     // height of bar when lifter is standing up straight.
     topHeight : {default: 1.7},
@@ -45,7 +46,9 @@ AFRAME.registerComponent('bar-monitor', {
       insideLR = true
     }
 
-    const zOffset = this.data.hookPosition.z - barPosition.z
+    // zOffset relative to hook Position will be positive (up to rack depth)
+    // or very small negative (to 10cm tolerance) when inside the rack.
+    const zOffset = barPosition.z - this.data.hookPosition.z
     if ((zOffset) < this.data.rackDepth && 
         (zOffset) > -0.1) {
       insideFB = true

@@ -25,10 +25,8 @@ AFRAME.registerComponent('bar-position', {
     this.tempQuaternion = new THREE.Quaternion()
 
     // world position of rack.
-    this.rack = new THREE.Object3D()
-    rack = this.rack
-
-    rack.position.set(0, 0, 1.001)
+    this.rackEl = document.querySelector('#rack')
+    rack = this.rackEl.object3D
     this.rackInverseTransform = new THREE.Matrix4()
     rack.updateWorldMatrix()
     this.rackInverseTransform.copy(rack.matrixWorld)

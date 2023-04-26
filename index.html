@@ -9,9 +9,9 @@
 
       <!-- default camera; no movement controls - not suitable for MR-->
       <!-- WASD controls useful for debugging on desktop -->
-      <a-entity camera look-controls wasd-controls position="0 1.6 0"></a-entity>
+      <a-entity camera look-controls wasd-controls='acceleration: 10' vertical-controls position="0 1.6 0"></a-entity>
 
-      <a-entity squat-rack position="0 0 -1"></a-entity>
+      <a-entity id="rack" squat-rack position="0 0 -1"></a-entity>
 
       <a-entity id="inside-rack-ui" position="0 1 -2" in-rack-ui></a-entity>
       <a-entity id="outside-rack-ui" position="0 1 -2" out-rack-ui visible="false"></a-entity>
