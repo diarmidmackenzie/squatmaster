@@ -5,16 +5,65 @@
     <script src="./dist/squatmaster.js"></script>
   </head>
   <body>
-    <a-scene background="color: #88f" bar-position bar-monitor ui-updater nod-shake="debug: true">
+    <a-scene background="color: #88f"
+             bar-position
+             bar-monitor
+             ui-updater
+             nod-shake
+             ui-manager
+             calibration-flow> 
+             <!-- set calibration-flow="skip: true">  to skip calibration & work with defaults-->
+
+      <a-assets>
+        <img id="calibration0" src="./assets/images/Calibration UI 0.png"/>
+        <img id="calibration1" src="./assets/images/Calibration UI 1.png"/>
+        <img id="calibration2" src="./assets/images/Calibration UI 2.png"/>
+        <img id="calibration3" src="./assets/images/Calibration UI 3.png"/>
+        <img id="calibration4" src="./assets/images/Calibration UI 4.png"/>
+        <img id="calibration5" src="./assets/images/Calibration UI 5.png"/>
+        <img id="calibration6" src="./assets/images/Calibration UI 6.png"/>
+        <img id="calibration7" src="./assets/images/Calibration UI 7.png"/>
+        <img id="cross" src="./assets/images/Cross.png"/>
+        <img id="check" src="./assets/images/Check.png"/>
+
+        <audio id="sound1" src="./assets/audio/BL-0001_Ok-lets-get-you-set-up_48k_stereo.mp3"></audio>
+        <audio id="sound2" src="./assets/audio/assets/BL-0002_Stand-in-the-middle-of-the-squ_24k_stereo.mp3"></audio>
+        <audio id="sound3" src="./assets/audio/BL-0001_Look-below-to-continue_24k_stereo.mp3"></audio>
+        <audio id="sound4" src="./assets/audio/BL-0002_Place-empty-bar-on-the-rack_48k_stereo.mp3"></audio>
+        <audio id="sound5" src="./assets/audio/BL-0003_Get-into-position-under-the-ba_48k_stereo.mp3"></audio>
+        <audio id="sound6" src="./assets/audio/BL-0003_Look-below-to-confirm-or-go-ba_24k_stereo.mp3"></audio>
+        <audio id="sound7" src="./assets/audio/BL-0005_Step-back-and-stand-up-straigh_48k_stereo.mp3"></audio>
+        <audio id="sound8" src="./assets/audio/BL-0006_Squat-down-to-your-target-dept_48k_stereo.mp3"></audio>
+        <audio id="sound9" src="./assets/audio/BL-0007_Squat-down-further-until-bar-i_48k_stereo.mp3"></audio>
+        <audio id="sound10" src="./assets/audio/BL-0008_Stand-up-and-place-bar-back-on_48k_stereo.mp3"></audio>
+        <audio id="sound11" src="./assets/audio/BL-0009_Set-up-is-now-complete_48k_stereo.mp3"></audio>
+        <audio id="sound12" src="./assets/audio/BL-0004_Look-below-to-begin-your-worko_24k_stereo.mp3"></audio>
+        <audio id="sound13" src="./assets/audio/BL-0010_Here-we-go_48k_stereo.mp3"></audio>
+        <audio id="sound14" src="./assets/audio/BL-0011_nice_48k_stereo.mp3"></audio>
+        <audio id="sound15" src="./assets/audio/BL-0012_Last-one_48k_stereo.mp3"></audio>
+        <audio id="sound16" src="./assets/audio/BL-0013_Not-quite-deep-enough_48k_stereo.mp3"></audio>
+      </a-assets>
 
       <!-- default camera; no movement controls - not suitable for MR-->
       <!-- WASD controls useful for debugging on desktop -->
-      <a-entity camera look-controls wasd-controls='acceleration: 10' vertical-controls position="0 1.6 0"></a-entity>
+      <a-entity camera look-controls wasd-controls='acceleration: 10' vertical-controls position="0 1.6 0">
+        <a-entity cursor="fuse: true; fuseTimeout: 1000"
+            position="0 0 -1"
+            geometry="primitive: circle; radius: 0.01"
+            material="color: orange; shader: flat"
+            raycaster="objects: .clickable">
+        </a-entity>
+      </a-entity>
 
-      <a-entity id="rack" squat-rack position="0 0 -1"></a-entity>
+      <a-entity id="rack" Zsquat-rack position="0 0 -1">
+        <!-- delete Z from Zsquat-rack to make squat-rack visible-->
+        <!-- Sound positioned just behind the lifter (where a coach might be in the gym)-->
+        <a-sound id="sound-origin" position = "0 1.5 1" volume="4"></a-sound>
+      </a-entity>
 
-      <a-entity id="inside-rack-ui" position="0 1 -2" in-rack-ui></a-entity>
-      <a-entity id="outside-rack-ui" position="0 1 -2" out-rack-ui visible="false"></a-entity>
+      <a-entity id="inside-rack-ui" position="0 1 -4" inside-rack-ui visible="false"></a-entity>
+      <a-entity id="calibration-ui" position="0 1 -4" visible="true"></a-entity>
+      <a-entity id="outside-rack-ui" position="0 1 -2" outside-rack-ui visible="false"></a-entity>
     </a-scene>
   </body>
 </html>

@@ -6,8 +6,6 @@ AFRAME.registerComponent('ui-updater', {
 
   init() {
 
-    this.enteredRack = this.enteredRack.bind(this)
-    this.exitedRack = this.exitedRack.bind(this)
     this.reachedHooks = this.reachedHooks.bind(this)
     this.leftHooks = this.leftHooks.bind(this)
     this.shoulderedBar = this.shoulderedBar.bind(this)
@@ -19,8 +17,6 @@ AFRAME.registerComponent('ui-updater', {
     this.belowSafetyPins = this.belowSafetyPins.bind(this)
     this.bailedOut = this.bailedOut.bind(this)
 
-    this.el.addEventListener('entered-rack', this.enteredRack);
-    this.el.addEventListener('exited-rack', this.exitedRack);
     this.el.addEventListener('reached-hooks', this.reachedHooks);
     this.el.addEventListener('left-hooks', this.leftHooks);
     this.el.addEventListener('shouldered-bar', this.shoulderedBar);
@@ -34,17 +30,27 @@ AFRAME.registerComponent('ui-updater', {
 
     this.state = {
       repPhase: 'none',  // one of: none, ready, down, up, rest
-      repsToGo: 0
+      repNumber: 0,
+      repsToGo: 5
     }
 
     this.insideRackUI = document.querySelector('#inside-rack-ui')
     this.outsideRackUI = document.querySelector('#outside-rack-ui')
 
+    this.repData = {
+      repNumber: 0,
+      completed: false,
+      restPrior: 0,
+      timeDown: 0,
+      depth: 0,
+      timeUp: 0,
+      turnSpeed: 0,
+      deviationLR: 0,
+      deviationFB: 0
+    }
   },
 
   remove() {
-    this.el.removeEventListener('entered-rack', this.enteredRack);
-    this.el.removeEventListener('exited-rack', this.exitedRack);
     this.el.removeEventListener('reached-hooks', this.reachedHooks);
     this.el.removeEventListener('left-hooks', this.leftHooks);
     this.el.removeEventListener('shouldered-bar', this.shoulderedBar);
@@ -60,38 +66,18 @@ AFRAME.registerComponent('ui-updater', {
   setTargetReps(repCount) {
 
     this.state.repsToGo = repCount
-    this.insideRackUI.setAttribute('in-rack-ui', {repsToGo: this.state.repsToGo})
+    this.insideRackUI.setAttribute('inside-rack-ui', {repsToGo: this.state.repsToGo})
   },
 
-  repCompleted() {
+  repCompleted(completed) {
 
+    // !! Still need to fill in rep data.
+    this.repData.completed = completed
+    this.repData.repNumber = this.state.repNumber
+    this.el.emit('rep-report', this.repData)
     this.state.repsToGo--
-    this.insideRackUI.setAttribute('in-rack-ui', {repsToGo: this.state.repsToGo})
-  },
-
-  enteredRack() {
-
-    if (this.insideRackUI) {
-      this.insideRackUI.setAttribute('visible', true)
-    }
-    
-    if (this.outsideRackUI) {
-      this.outsideRackUI.setAttribute('visible', false)
-    }
-
-    this.setTargetReps(5)
-
-  },
-
-  exitedRack() {
-
-    if (this.insideRackUI) {
-      this.insideRackUI.setAttribute('visible', false)
-    }
-    
-    if (this.outsideRackUI) {
-      this.outsideRackUI.setAttribute('visible', true)
-    }
+    this.state.repNumber++
+    this.insideRackUI.setAttribute('inside-rack-ui', {repsToGo: this.state.repsToGo})
   },
 
   reachedHooks() {
@@ -112,7 +98,7 @@ AFRAME.registerComponent('ui-updater', {
   },
 
   setMessage(message) {
-    this.insideRackUI.setAttribute('in-rack-ui', {message: message})
+    this.insideRackUI.setAttribute('inside-rack-ui', {message: message})
   },
 
   hitTop() {
@@ -133,7 +119,7 @@ AFRAME.registerComponent('ui-updater', {
       case 'up':
         this.state.repPhase = 'rest'
         this.setMessage('Rep Complete')
-        this.repCompleted()
+        this.repCompleted(true)
         break
 
       default: 
@@ -210,6 +196,7 @@ AFRAME.registerComponent('ui-updater', {
   },
 
   bailedOut() {
+    this.repCompleted(false)
     this.setMessage('Failed set.  Step out of rack and remove weight plates from bar.')
   }
 })

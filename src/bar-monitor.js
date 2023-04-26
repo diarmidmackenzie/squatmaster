@@ -11,19 +11,26 @@ AFRAME.registerComponent('bar-monitor', {
     hookPosition : {type: 'vec3', default: {x: 0, y: 1.5, z: -0.5}},
 
     // height of bar when lifter is standing up straight.
-    topHeight : {default: 1.7},
+    topHeight : {default: 0},
 
     // target depth for bar, to achieve parallel thighs.
-    targetDepth: {default: 0.6},
+    targetDepth: {default: 0},
 
     // height of the bar when it hits the safety pins.
-    safetyPinHeight: {default: 0.5},
+    safetyPinHeight: {default: 0},
 
     // width of rack in meters
     rackWidth: {default: 1},
 
     // depth (z-direction) of rack in meters
-    rackDepth: {default: 1}
+    rackDepth: {default: 1},
+
+    // whether to show planes
+    showPlanes: {default: true},
+
+    // opacity of planes (if used)
+    opacity: {default: 0.3}
+
   },
 
   init() {
@@ -36,6 +43,75 @@ AFRAME.registerComponent('bar-monitor', {
       belowDepth : false,
       belowSafetyPins : false,
     }
+   },
+
+  update() {
+    this.deletePlanes()
+
+    if (this.data.showPlanes) {
+      this.createPlanes()
+    }
+  },
+
+  createPlanes() {
+
+    this.aboveTopPlane = this.createPlane(this.data.topHeight, 'outline', 'white')
+    this.topPlaneUpwards = this.createPlane(this.data.topHeight - 0.05, 'outline', 'green')
+    //this.topPlaneDownwards = this.createPlane(this.data.topHeight - 0.05, , 'outline', 'white')
+    this.depthPlaneUpwards = this.createPlane(this.data.targetDepth, 'outline', 'green')
+    //this.depthPlaneDownwards = this.createPlane(this.data.targetDepth, , 'outline', 'white')
+    this.safetyPlaneTop = this.createPlane(this.data.safetyPinHeight, 'outline', 'orange')
+    this.safetyPlaneBottom = this.createPlane(this.data.safetyPinHeight - 0.05, 'outline', 'red')
+  },
+
+  deletePlanes() {
+
+    deletePlane = (plane) => {
+      if (plane) {
+        plane.parentNode.removeChild(plane)
+      }
+    }
+
+    deletePlane(this.aboveTopPlane)
+    deletePlane(this.topPlaneUpwards)
+    deletePlane(this.topPlaneDownwards)
+    deletePlane(this.depthPlaneUpwards)
+    deletePlane(this.depthPlaneDownwards)
+    deletePlane(this.safetyPlaneTop)
+    deletePlane(this.safetyPlaneBottom)
+
+    this.aboveTopPlane = null
+    this.aboveTopPlane = null
+    this.topPlaneUpwards = null
+    this.topPlaneDownwards = null
+    this.depthPlaneUpwards = null
+    this.depthPlaneDownwards = null
+    this.safetyPlaneTop = null
+    this.safetyPlaneBottom = null
+  },
+
+  createPlane(height, style, color, side) {
+    const plane = document.createElement('a-plane')
+    plane.setAttribute('width', this.data.rackWidth)
+    plane.setAttribute('height', this.data.rackDepth)
+    plane.object3D.position.y = height
+    plane.object3D.rotation.x = Math.PI / 2
+
+    if (style === 'transparent') {
+      plane.setAttribute('material', {opacity: this.data.opacity,
+                                      transparent: true,
+                                      color: color,
+                                      side: side})
+    }
+    else {
+      console.assert(style === 'outline')
+      plane.setAttribute('polygon-wireframe', {color: color})
+    }
+
+    const rackEl = document.querySelector('#rack')
+    rackEl.appendChild(plane)
+
+    return plane
   },
 
   isInsideRack(barPosition) {
