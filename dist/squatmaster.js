@@ -33,10 +33,10 @@ AFRAME.registerComponent('bar-monitor', {
     topHeight : {default: 1.7},
 
     // target depth for bar, to achieve parallel thighs.
-    targetDepth: {default: 0.6},
+    targetDepth: {default: 1},
 
     // height of the bar when it hits the safety pins.
-    safetyPinHeight: {default: 0.5},
+    safetyPinHeight: {default: 0.75},
 
     // width of rack in meters
     rackWidth: {default: 1},
@@ -585,7 +585,7 @@ AFRAME.registerGeometry('squatRack', {
       hookRadiusLarge: {default: 0.04},
       hookDepth: {default: 0.08},
       hookHeight: {default: 1.5},
-      safetyHeight: {default: 0.5},
+      safetyHeight: {default: 0.75},
       safetyRadius: {default: 0.02},
     },
   },
@@ -680,7 +680,7 @@ AFRAME.registerComponent('squat-rack', {
     hookRadiusLarge: {default: 0.04},
     hookDepth: {default: 0.08},
     hookHeight: {default: 1.5},
-    safetyHeight: {default: 0.5},
+    safetyHeight: {default: 0.75},
     safetyRadius: {default: 0.02},
   },
 
