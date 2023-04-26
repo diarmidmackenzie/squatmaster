@@ -13,6 +13,17 @@
              ui-manager
              calibration-flow>
 
+      <a-assets>
+        <img id="calibration0" src="./assets/images/Calibration UI 0.png"/>
+        <img id="calibration1" src="./assets/images/Calibration UI 1.png"/>
+        <img id="calibration2" src="./assets/images/Calibration UI 2.png"/>
+        <img id="calibration3" src="./assets/images/Calibration UI 3.png"/>
+        <img id="calibration4" src="./assets/images/Calibration UI 4.png"/>
+        <img id="calibration5" src="./assets/images/Calibration UI 5.png"/>
+        <img id="calibration6" src="./assets/images/Calibration UI 6.png"/>
+        <img id="calibration7" src="./assets/images/Calibration UI 7.png"/>
+      </a-assets>
+
       <!-- default camera; no movement controls - not suitable for MR-->
       <!-- WASD controls useful for debugging on desktop -->
       <a-entity camera look-controls wasd-controls='acceleration: 10' vertical-controls position="0 1.6 0"></a-entity>
@@ -20,7 +31,7 @@
       <a-entity id="rack" squat-rack position="0 0 -1"></a-entity>
 
       <a-entity id="inside-rack-ui" position="0 1 -4" inside-rack-ui visible="false"></a-entity>
-      <a-entity id="calibration-ui" position="0 1 -4" calibration-ui visible="true"></a-entity>
+      <a-entity id="calibration-ui" position="0 1 -4" visible="true"></a-entity>
       <a-entity id="outside-rack-ui" position="0 1 -2" outside-rack-ui visible="false"></a-entity>
     </a-scene>
   </body>

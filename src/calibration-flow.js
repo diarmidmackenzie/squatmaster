@@ -1,21 +1,12 @@
-const calibrationUIMessages = {
-  start: 'Ensure your safety pins are in place at a suitable height.  Position the hooks just below shoulder height, and place an empty bar across the hooks.',
-  hooks: 'Without moving the bar yet, duck under and brace your shoulders against the bar',
-  top: 'Stand up to your full height, and take a step back',
-  depth: 'Squat down to your target depth: thighs parallel to the floor',
-  safety: 'Bend down further, so that the bar sits on your safety pins',
-  review: 'Stand up again.  If you are happy, nod, and return the bar to the rack',
-  done: 'Calibration is now complete'
-}
-
-const calibrationUIPositions = {
-  start: '',
-  hooks: 'racked bar position',
-  top: 'height at top of squat',
-  depth: 'target depth',
-  safety: 'safety pin depth',
-  review: '',
-  done: '',
+const calibrationUIImages = {
+  start: '#calibration0',
+  bar: '#calibration1',
+  hooks: '#calibration2',
+  top: '#calibration3', 
+  depth: '#calibration4',
+  safety: '#calibration5',
+  review: '#calibration6',
+  done: '#calibration7',
 }
 
 AFRAME.registerComponent('calibration-flow', {
@@ -26,9 +17,11 @@ AFRAME.registerComponent('calibration-flow', {
 
     this.nodEvent = this.nodEvent.bind(this)
     this.shakeEvent = this.shakeEvent.bind(this)
+    this.reachedHooks = this.reachedHooks.bind(this)
     
     this.el.addEventListener('nod', this.nodEvent);
     this.el.addEventListener('shake', this.shakeEvent);
+    this.el.addEventListener('reached-hooks', this.reachedHooks);
 
     // UI state
     this.stage = 'start' // one of: start, hooks, top, depth, safety, review, done
@@ -92,6 +85,16 @@ AFRAME.registerComponent('calibration-flow', {
     }, 500)
   },
 
+  reachedHooks() {
+
+    // special case for step 6 -> 7 transition, based on reaching hooks again,
+    // not based on nods...
+
+    if (this.stage === 'review') {
+      this.moveToStage('done')
+    }
+  },
+
   nodEvent() {
 
     let yPos
@@ -99,6 +102,11 @@ AFRAME.registerComponent('calibration-flow', {
     switch (this.stage) {
 
       case 'start':
+        // no data to record yet.
+        this.moveToStage('bar')
+        break
+
+      case 'bar':
         // no data to record yet.
         this.moveToStage('hooks')
         break
@@ -130,7 +138,8 @@ AFRAME.registerComponent('calibration-flow', {
         break
 
       case 'review':
-        this.moveToStage('done')
+        // No action
+        // Final move step 6 -> 7 is based on 'reached-hooks' event
         break
 
       case 'done':
@@ -187,46 +196,55 @@ AFRAME.registerComponent('calibration-flow', {
     this.calibrationUI.setAttribute('calibration-ui',
                                      {saving: this.saving,
                                       deleting: this.deleting,
-                                      position: calibrationUIPositions[this.stage],
-                                      message: calibrationUIMessages[this.stage]})
+                                      imageSelector: calibrationUIImages[this.stage]})
   }
 })
 
 AFRAME.registerComponent('calibration-ui', {
 
   schema: {
-    saving: {default: false},
-    deleting: {default: false},
-    position: {default: ''},
-    message: {default: ''},
+    imageSelector: {type: 'string'},
+    saving: {default: false},  // to re-implement
+    deleting: {default: false}, // to re-implement
   },
 
   init() {
-    this.circle = document.createElement('a-circle')
-    this.circle.setAttribute('radius', 1)
-    this.circle.setAttribute('color', 'yellow')
+    this.circle = document.createElement('a-entity')
+    this.circle.setAttribute('geometry', 'primitive: circle; radius: 1')
+    this.circle.setAttribute('material', 'color: white; opacity: 0.8; transparent: true')
     this.el.appendChild(this.circle)
 
-    this.text = document.createElement('a-entity')
-    this.text.setAttribute('text', {color: 'black',
-                                    width: 2,
-                                    wrapCount: 40,
-                                    align: 'center'})
-    this.circle.appendChild(this.text)
+    
+
+
+  },
+
+  createImage(src) {
+
+    this.image = document.createElement('a-image')
+    this.image.setAttribute('alpha-test', 0.5)
+    this.image.setAttribute('width', 2)
+    this.image.setAttribute('height', 2)
+    this.image.setAttribute('transparent', true)
+    this.image.object3D.position.z = 0.001
+    this.image.setAttribute('src', src)
+    this.circle.appendChild(this.image)
+
+  },
+
+  deleteImage() {
+
+    if (this.image) {
+      this.image.parentNode.removeChild(this.image)
+      this.image = null
+    }
   },
 
   update() {
-
-    let string = ''
-    if (this.data.saving) {
-      string += `Saving ${this.data.position}...\n\n`
+    this.deleteImage()
+    if (this.data.imageSelector) {
+   
+      this.createImage(this.data.imageSelector)
     }
-    if (this.data.deleting) {
-      string += `Deleting ${this.data.position}...\n\n`
-    }
-
-    string += this.data.message
-
-    this.text.setAttribute('text', `value: ${string}`)
   }
 });
