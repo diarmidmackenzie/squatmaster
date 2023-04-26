@@ -11,6 +11,149 @@
 return /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ "./node_modules/aframe-polygon-wireframe/index.js":
+/*!********************************************************!*\
+  !*** ./node_modules/aframe-polygon-wireframe/index.js ***!
+  \********************************************************/
+/***/ (() => {
+
+AFRAME.registerComponent("polygon-wireframe", {
+
+    schema: {
+        color: { type: 'color', default: 'grey' },
+        opacity: { type: 'number', default: 1 },
+        hiddenOpacity: { type: 'number', default: 0 },
+        dashed: { type: 'boolean', default: false },
+        dashSize: { type: 'number', default: 3 },
+        gapSize: { type: 'number', default: 1 },
+        dashScale: { type: 'number', default: 30 },
+    },
+
+    init() {
+
+      this.updateGeometry = this.updateGeometry.bind(this)
+      this.el.addEventListener('object3dset', this.updateGeometry)
+      if (this.el.getObject3D('mesh')) {
+        this.updateGeometry()
+      }
+    },
+
+    updateGeometry() {
+
+      const baseGeometry = this.el.getObject3D('mesh').geometry
+      if (!baseGeometry) {
+        return
+      }
+
+      if (this.edges) {
+        this.edges.dispose()
+      }
+
+      this.edges = new THREE.EdgesGeometry(baseGeometry);
+      this.update()
+    },
+
+    update() {
+
+      const oldMaterial = this.material
+      const oldLine = this.line
+      const oldHiddenMaterial = this.hiddenMaterial
+      const oldHiddenLine = this.hiddenLine
+
+      const data = this.data
+
+      this.material = this.createLineMaterial(data.color, data.opacity)
+
+      if (data.hiddenOpacity !== 0 && 
+          data.hiddenOpacity !== data.opacity) {
+        // separate material needed for hidden parts
+        this.hiddenMaterial = this.createLineMaterial(data.color, data.hiddenOpacity)
+
+        if (data.hiddenOpacity > data.opacity) {
+          console.warn("Opacity of hidden parts cannot be higher than the opacity of non-hidden parts")
+          console.warn("Wireframe will be rendered with opacity ", data.hiddenOpacity, " as set on hiddenOpacity property.")
+        }
+      }
+      else {
+        this.hiddenMaterial = null
+      }
+
+      if (data.hiddenOpacity !== 0) {
+        const material = this.hiddenMaterial || this.material
+        material.depthWrite = false
+        material.depthTest = false
+        material.toneMapped = false
+      }
+      
+      this.line = new THREE.LineSegments( this.edges, this.material );
+      this.line.computeLineDistances();
+      this.el.object3D.add( this.line );
+
+      if (this.hiddenMaterial) {
+        this.hiddenLine = new THREE.LineSegments( this.edges, this.hiddenMaterial );
+        this.hiddenLine.computeLineDistances();
+        this.el.object3D.add( this.hiddenLine );
+      }
+
+      this.el.getObject3D('mesh').visible = false;
+
+      // dispose of any old materials & lines
+      function removeLineAndMaterial(line, material) {
+        if (line) {
+          line.removeFromParent()
+        }
+        if (material) {
+          material.dispose()
+        }
+      }
+      this.removeLineAndMaterial(oldLine, oldMaterial)
+      this.removeLineAndMaterial(oldHiddenLine, oldHiddenMaterial)
+    },
+
+    removeLineAndMaterial(line, material) {
+      if (line) {
+        line.removeFromParent()
+      }
+      if (material) {
+        material.dispose()
+      }
+    },
+
+    createLineMaterial(color, opacity) {
+
+      const data = this.data
+      let material
+      if (!data.dashed) {
+          material = new THREE.LineBasicMaterial( { color: color } )
+      }
+      else {
+          material = new THREE.LineDashedMaterial( { color: color,
+                                                     dashSize: data.dashSize,
+                                                     gapSize: data.gapSize,
+                                                     scale: data.dashScale } )
+      }
+      material.opacity = opacity
+      if (opacity !== 1) {
+        material.transparent = true
+      }
+
+      return material
+    },
+
+    remove() {
+
+      this.el.removeEventListener('object3dset', this.updateGeometry)
+      this.el.getObject3D('mesh').visible = true;
+      if (this.edges) {
+        this.edges.dispose()
+      }
+
+      this.removeLineAndMaterial(this.line, this.material)
+    }
+})
+
+/***/ }),
+
 /***/ "./src/bar-monitor.js":
 /*!****************************!*\
   !*** ./src/bar-monitor.js ***!
@@ -42,7 +185,13 @@ AFRAME.registerComponent('bar-monitor', {
     rackWidth: {default: 1},
 
     // depth (z-direction) of rack in meters
-    rackDepth: {default: 1}
+    rackDepth: {default: 1},
+
+    showPlanes: {default: true},
+
+    opacity: {default: 0.3}
+
+
   },
 
   init() {
@@ -55,6 +204,72 @@ AFRAME.registerComponent('bar-monitor', {
       belowDepth : false,
       belowSafetyPins : false,
     }
+   },
+
+  update() {
+    this.deletePlanes()
+    this.createPlanes()
+  },
+
+  createPlanes() {
+
+    this.aboveTopPlane = this.createPlane(this.data.topHeight, 'outline', 'white')
+    this.topPlaneUpwards = this.createPlane(this.data.topHeight - 0.05, 'transparent', 'yellow', 'front')
+    this.topPlaneDownwards = this.createPlane(this.data.topHeight - 0.05, 'transparent', 'green', 'back')
+    this.depthPlaneUpwards = this.createPlane(this.data.targetDepth, 'transparent', 'green', 'front')
+    this.depthPlaneDownwards = this.createPlane(this.data.targetDepth, 'transparent', 'yellow', 'back')
+    this.safetyPlaneTop = this.createPlane(this.data.safetyPinHeight, 'outline', 'orange')
+    this.safetyPlaneBottom = this.createPlane(this.data.safetyPinHeight, 'outline', 'red')
+  },
+
+  deletePlanes() {
+
+    deletePlane = (plane) => {
+      if (plane) {
+        plane.parentNode.removeChild(plane)
+      }
+    }
+
+    deletePlane(this.aboveTopPlane)
+    deletePlane(this.topPlaneUpwards)
+    deletePlane(this.topPlaneDownwards)
+    deletePlane(this.depthPlaneUpwards)
+    deletePlane(this.depthPlaneDownwards)
+    deletePlane(this.safetyPlaneTop)
+    deletePlane(this.safetyPlaneBottom)
+
+    this.aboveTopPlane = null
+    this.aboveTopPlane = null
+    this.topPlaneUpwards = null
+    this.topPlaneDownwards = null
+    this.depthPlaneUpwards = null
+    this.depthPlaneDownwards = null
+    this.safetyPlaneTop = null
+    this.safetyPlaneBottom = null
+  },
+
+  createPlane(height, style, color, side) {
+    const plane = document.createElement('a-plane')
+    plane.setAttribute('width', this.data.rackWidth)
+    plane.setAttribute('height', this.data.rackDepth)
+    plane.object3D.position.y = height
+    plane.object3D.rotation.x = Math.PI / 2
+
+    if (style === 'transparent') {
+      plane.setAttribute('material', {opacity: this.data.opacity,
+                                      transparent: true,
+                                      color: color,
+                                      side: side})
+    }
+    else {
+      console.assert(style === 'outline')
+      plane.setAttribute('polygon-wireframe', {color: color})
+    }
+
+    const rackEl = document.querySelector('#rack')
+    rackEl.appendChild(plane)
+
+    return plane
   },
 
   isInsideRack(barPosition) {
@@ -333,8 +548,9 @@ AFRAME.registerComponent('bar-position', {
     this.barPosition = new THREE.Vector3()
     
     this.barOffset = new THREE.Vector3()
-    // for now, hard code bar 20 cm behind camera, 10cm below
-    this.barOffset.set(0, -0.1, -0.2)
+    // Potential for bar offset, but setting to zero for now.
+    // Plane visualization doesn't accoutn for this and would need to be updated if we added this back in.
+    //this.barOffset.set(0, -0.1, -0.2)
     this.getCameraAndBarPosition()
     
   },
@@ -921,8 +1137,8 @@ AFRAME.registerComponent('squat-rack', {
     hookRadiusSmall: {default: 0.02},
     hookRadiusLarge: {default: 0.04},
     hookDepth: {default: 0.08},
-    hookHeight: {default: 1.5},
-    safetyHeight: {default: 0.75},
+    hookHeight: {default: 1.4},
+    safetyHeight: {default: 0.65},
     safetyRadius: {default: 0.02},
   },
 
@@ -1314,6 +1530,7 @@ __webpack_require__(/*! ./src/vertical-controls.js */ "./src/vertical-controls.j
 __webpack_require__(/*! ./src/nod-shake.js */ "./src/nod-shake.js")
 __webpack_require__(/*! ./src/calibration-flow */ "./src/calibration-flow.js")
 __webpack_require__(/*! ./src/ui-manager */ "./src/ui-manager.js")
+__webpack_require__(/*! aframe-polygon-wireframe */ "./node_modules/aframe-polygon-wireframe/index.js")
 })();
 
 /******/ 	return __webpack_exports__;

@@ -38,8 +38,9 @@ AFRAME.registerComponent('bar-position', {
     this.barPosition = new THREE.Vector3()
     
     this.barOffset = new THREE.Vector3()
-    // for now, hard code bar 20 cm behind camera, 10cm below
-    this.barOffset.set(0, -0.1, -0.2)
+    // Potential for bar offset, but setting to zero for now.
+    // Plane visualization doesn't accoutn for this and would need to be updated if we added this back in.
+    //this.barOffset.set(0, -0.1, -0.2)
     this.getCameraAndBarPosition()
     
   },
