@@ -206,6 +206,8 @@ AFRAME.registerComponent('ui-updater', {
   bailedOut() {
     this.repCompleted(false)
     this.setMessage('Failed set.  Step out of rack and remove weight plates from bar.')
+  },
+
   playPrompt(src) {
     const origin = document.getElementById('sound-origin')
 
