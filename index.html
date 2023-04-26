@@ -11,7 +11,8 @@
              ui-updater
              nod-shake
              ui-manager
-             calibration-flow>
+             calibration-flow> 
+             <!-- set calibration-flow="skip: true">  to skip calibration & work with defaults-->
 
       <a-assets>
         <img id="calibration0" src="./assets/images/Calibration UI 0.png"/>
@@ -54,7 +55,8 @@
         </a-entity>
       </a-entity>
 
-      <a-entity id="rack" squat-rack position="0 0 -1">
+      <a-entity id="rack" Zsquat-rack position="0 0 -1">
+        <!-- delete Z from Zsquat-rack to make squat-rack visible-->
         <!-- Sound positioned just behind the lifter (where a coach might be in the gym)-->
         <a-sound id="sound-origin" position = "0 1.5 1" volume="4"></a-sound>
       </a-entity>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="../dist/squatmaster.js"></script>
+    <script>
+      AFRAME.registerComponent('fake-data', {
+
+        init() {
+
+          setTimeout(() => {
+
+            const repData = {repNumber: 0,
+                             completed: true,
+                             restPrior: 0,
+                             timeDown: 0,
+                             depth: 0,
+                             timeUp: 0,
+                             turnSpeed: 0,
+                             deviationLR: 0,
+                             deviationFB: 0}
+            this.el.emit('rep-report', repData)
+          }, 1000)
+
+          setTimeout(() => {
+            const repData = {repNumber: 1,
+                            completed: false,
+                            restPrior: 0,
+                            timeDown: 0,
+                            depth: 0,
+                            timeUp: 0,
+                            turnSpeed: 0,
+                            deviationLR: 0,
+                            deviationFB: 0}
+            this.el.emit('rep-report', repData)
+            }, 2000)
+        }
+      })
+    </script>
+  </head>
+  <body>
+    <a-scene background="color: #88f"
+             bar-position
+             bar-monitor
+             ui-updater
+             nod-shake
+             fake-data>
+
+      <a-assets>
+        <img id="cross" src="../assets/images/Cross.png"/>
+        <img id="check" src="../assets/images/Check.png"/>
+      </a-assets>
+
+      <a-entity id="rack" squat-rack position="0 0 -1"></a-entity>
+      <a-entity id="inside-rack-ui" position="0 1 -4" inside-rack-ui></a-entity>
+
+    </a-scene>
+  </body>
+</html>

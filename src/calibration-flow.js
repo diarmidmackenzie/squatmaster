@@ -37,6 +37,10 @@ AFRAME.registerComponent('calibration-flow', {
 
   dependencies: ['bar-position'],
 
+  schema: {
+    skip: {default: false} // for testing: skip calibration & just set up with some defaults.
+  },
+
   init() {
 
     this.reachedHooks = this.reachedHooks.bind(this)
@@ -60,6 +64,16 @@ AFRAME.registerComponent('calibration-flow', {
     this.el.addEventListener('enter-vr', () => {
       this.playPrompt(this.stage)
     })
+
+    if (this.data.skip) {
+
+      this.el.setAttribute('bar-monitor', 
+                            `topHeight: 1.6;
+                             targetDepth: 0.9;
+                             safetyPinHeight: 0.75`)
+
+      this.endCalibrationProcess()
+    }
   },
 
   update() {

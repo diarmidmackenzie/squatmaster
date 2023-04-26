@@ -30,12 +30,24 @@ AFRAME.registerComponent('ui-updater', {
 
     this.state = {
       repPhase: 'none',  // one of: none, ready, down, up, rest
+      repNumber: 0,
       repsToGo: 5
     }
 
     this.insideRackUI = document.querySelector('#inside-rack-ui')
     this.outsideRackUI = document.querySelector('#outside-rack-ui')
 
+    this.repData = {
+      repNumber: 0,
+      completed: false,
+      restPrior: 0,
+      timeDown: 0,
+      depth: 0,
+      timeUp: 0,
+      turnSpeed: 0,
+      deviationLR: 0,
+      deviationFB: 0
+    }
   },
 
   remove() {
@@ -57,9 +69,14 @@ AFRAME.registerComponent('ui-updater', {
     this.insideRackUI.setAttribute('inside-rack-ui', {repsToGo: this.state.repsToGo})
   },
 
-  repCompleted() {
+  repCompleted(completed) {
 
+    // !! Still need to fill in rep data.
+    this.repData.completed = completed
+    this.repData.repNumber = this.state.repNumber
+    this.el.emit('rep-report', this.repData)
     this.state.repsToGo--
+    this.state.repNumber++
     this.insideRackUI.setAttribute('inside-rack-ui', {repsToGo: this.state.repsToGo})
   },
 
@@ -102,7 +119,7 @@ AFRAME.registerComponent('ui-updater', {
       case 'up':
         this.state.repPhase = 'rest'
         this.setMessage('Rep Complete')
-        this.repCompleted()
+        this.repCompleted(true)
         break
 
       default: 
@@ -179,6 +196,7 @@ AFRAME.registerComponent('ui-updater', {
   },
 
   bailedOut() {
+    this.repCompleted(false)
     this.setMessage('Failed set.  Step out of rack and remove weight plates from bar.')
   }
 })
