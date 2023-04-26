@@ -2,6 +2,7 @@
 <html>
   <head>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
     <script src="./dist/squatmaster.js"></script>
   </head>
   <body>
@@ -65,6 +66,8 @@
       <a-entity id="inside-rack-ui" position="0 1 -4" inside-rack-ui visible="false"></a-entity>
       <a-entity id="calibration-ui" position="0 1 -4" visible="true"></a-entity>
       <a-entity id="outside-rack-ui" position="0 1 -2" outside-rack-ui visible="false"></a-entity>
+
+      <a-entity id="video-stream" position="1 1 -4" video-stream></a-entity>
     </a-scene>
   </body>
 </html>
