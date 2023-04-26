@@ -33,7 +33,7 @@ AFRAME.registerComponent('nod-shake', {
   update() {
     if (this.data.debug) {
       this.display = document.createElement('a-text')
-      this.display.object3D.position.set(0, 0, -1)
+      this.display.object3D.position.set(0, 0, -3)
       this.display.setAttribute('align', 'center')
       this.display.setAttribute('value', 'Nod/shake debug')
       this.camera.el.appendChild(this.display)
