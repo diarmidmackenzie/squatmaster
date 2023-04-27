@@ -47,15 +47,22 @@ AFRAME.registerComponent('inside-rack-ui', {
     }
     rep.setAttribute('rep-report', {repNumber: repNumber,
                                     status: status,
-                                    restPrior: data.restPrior,
-                                    timeDown: data.timeDown,
-                                    depth: data.depth,
-                                    timeUp: data.timeUp,
-                                    turnSPeed: data.turnSpeed,
+                                    restPrior: data.restPrior / 1000, // msecs -> secs
+                                    timeDown: data.timeDown / 1000, // msecs -> secs
+                                    depth: data.depth * 100, // m -> cm
+                                    timeUp: data.timeUp / 1000, // msecs -> secs
+                                    turnSpeed: data.turnSpeed,
                                     daviationLR: data.deviationLR, 
                                     deviationFB: data.deviationFB})
   }
 });
+
+const reportStats = [
+  {key: 'restPrior', label: 'Rest', units: 's'},
+  {key: 'timeDown', label: 'Rest', units: 's'},
+  {key: 'depth', label: 'Rest', units: 'cm'},
+  {key: 'timeUp', label: 'Rest', units: 's'}
+]
 
 AFRAME.registerComponent('rep-report', {
   schema: {
@@ -85,6 +92,7 @@ AFRAME.registerComponent('rep-report', {
                                       align: 'center'})
     this.circle.appendChild(this.number)
 
+    this.childStats = []
   },
 
   update() {
@@ -109,6 +117,28 @@ AFRAME.registerComponent('rep-report', {
     else {
       this.number.object3D.visible = false
     }
+
+    reportStats.forEach((stat, index) => {
+      const {key, units} = stat
+
+      if (this.data[key]) {
+        const child = document.createElement('a-entity')
+        child.setAttribute('rep-report-stat', {
+          value: this.data[key],
+          ypos: -0.2 - (index * 0.7),
+          units: units
+        })
+        this.el.appendChild(child)
+        this.childStats.push(child)
+      }
+    })
+  },
+
+  deleteReportStats() {
+    this.childStats.forEach((el) => {
+      el.parentNode.removeChild(el)
+    })
+    this.childStats = []
   },
 
   createImage(parent, src, dimension) {
@@ -130,5 +160,36 @@ AFRAME.registerComponent('rep-report', {
       this.image.parentNode.removeChild(this.image)
       this.image = null
     }
+  }
+})
+
+
+AFRAME.registerComponent('rep-report-stat', {
+  schema: {
+    value: { type: 'number'},
+    ypos: {type: 'number'},
+    units: {type: 'string'}
+  }, 
+
+  init() {
+
+    this.circle = document.createElement('a-circle')
+    this.circle.setAttribute('radius', 0.3)
+    this.circle.setAttribute('material', {opacity: 0.8, transparent: true})
+    this.circle.object3D.position.y = this.data.ypos
+    this.el.appendChild(this.circle)
+
+    this.number = document.createElement('a-entity')
+
+    this.circle.appendChild(this.number)
+  },
+
+  update() {
+    const numberText = this.data.value.toFixed(1) + this.data.units
+    this.number.removeAttribute('text')
+    this.number.setAttribute('text', {color: 'black',
+                                      wrapCount: 10,
+                                      value: numberText,
+                                      align: 'center'})
   }
 })
