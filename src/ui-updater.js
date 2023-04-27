@@ -111,8 +111,6 @@ AFRAME.registerComponent('ui-updater', {
 
   leftHooks() {
     // no update needed
-    // track time, count this as "rest" start for rep 1
-    this.timestamps.finishedLast = Date.now()
   },
 
   shoulderedBar() {
@@ -136,12 +134,22 @@ AFRAME.registerComponent('ui-updater', {
         this.state.repPhase = 'ready'
         this.setMessage('Ready!')
         this.playPrompt('#sound-here-we-go')
+        // track time, count this as "rest" start for rep 1
+        this.timestamps.finishedLast = Date.now()
         break
 
       case 'down':
         this.state.repPhase = 'rest'
         this.setMessage('Incomplete Rep')
         this.playPrompt('#sound-not-quite')
+
+        this.repData.repNumber = this.state.repNumber
+        const targetDepth = this.el.sceneEl.components['bar-monitor'].data.targetDepth
+        this.repData.depth = this.state.minHeightThisRep - targetDepth
+        this.el.emit('rep-report', this.repData)
+
+        // wipe data about previous effort at depth.
+        this.state.minHeightThisRep = 1000
         break
 
       case 'up':
@@ -239,7 +247,7 @@ AFRAME.registerComponent('ui-updater', {
 
       case 'up':
         // assume we now hit our lowest point.
-        const targetDepth =     barPosition = this.el.sceneEl.components['bar-monitor'].data.targetDepth
+        const targetDepth = this.el.sceneEl.components['bar-monitor'].data.targetDepth
         this.repData.depth = this.state.minHeightThisRep - targetDepth
         this.el.emit('rep-report', this.repData)
 

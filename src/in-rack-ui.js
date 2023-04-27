@@ -49,7 +49,7 @@ AFRAME.registerComponent('inside-rack-ui', {
                                     status: status,
                                     restPrior: data.restPrior / 1000, // msecs -> secs
                                     timeDown: data.timeDown / 1000, // msecs -> secs
-                                    depth: data.depth * 100, // m -> cm
+                                    depth: -data.depth * 100, // m -> cm, flip sign.
                                     timeUp: data.timeUp / 1000, // msecs -> secs
                                     turnSpeed: data.turnSpeed,
                                     daviationLR: data.deviationLR, 
@@ -118,6 +118,8 @@ AFRAME.registerComponent('rep-report', {
       this.number.object3D.visible = false
     }
 
+    this.deleteReportStats()
+
     reportStats.forEach((stat, index) => {
       const {key, units} = stat
 
@@ -175,7 +177,7 @@ AFRAME.registerComponent('rep-report-stat', {
 
     this.circle = document.createElement('a-circle')
     this.circle.setAttribute('radius', 0.3)
-    this.circle.setAttribute('material', {opacity: 0.8, transparent: true})
+    this.circle.setAttribute('material', {opacity: 0.8, transparent: true, color: 'white'})
     this.circle.object3D.position.y = this.data.ypos
     this.el.appendChild(this.circle)
 
@@ -191,5 +193,12 @@ AFRAME.registerComponent('rep-report-stat', {
                                       wrapCount: 10,
                                       value: numberText,
                                       align: 'center'})
+    
+    if (this.data.value < 0) {
+      this.circle.setAttribute('material', {color: 'orange'})
+    }
+    else {
+      this.circle.setAttribute('material', {color: 'white'})
+    }
   }
 })
