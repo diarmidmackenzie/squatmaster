@@ -852,6 +852,7 @@ AFRAME.registerComponent('calibration-flow', {
         // Final move step 6 -> 7 is based on 'reached-hooks' event
         // but can also use forward button
         this.moveToStage('done')
+        this.playSFX('#sfx-interaction')
         break
 
       case 'done':
