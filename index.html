@@ -12,7 +12,7 @@
              ui-updater
              nod-shake
              ui-manager
-             calibration-flow> 
+             calibration-flow="skip: true"> 
              <!-- set calibration-flow="skip: true">  to skip calibration & work with defaults-->
 
       <a-assets>
@@ -43,6 +43,7 @@
         <audio id="sound-nice" src="./assets/audio/BL-0011_nice_48k_stereo.mp3"></audio>
         <audio id="sound-last-one" src="./assets/audio/BL-0012_Last-one_48k_stereo.mp3"></audio>
         <audio id="sound-not-quite" src="./assets/audio/BL-0013_Not-quite-deep-enough_48k_stereo.mp3"></audio>
+        <audio id="sound-good-job" src="./assets/audio/Block_Good-job.mp3"></audio>
 
         <audio id="sfx-data-removed" src="./assets/sfx/data-removed.mp3" preload="auto"></audio>
         <audio id="sfx-data-saved" src="./assets/sfx/data-saved.mp3" preload="auto"></audio>
@@ -64,7 +65,7 @@
         </a-entity>
       </a-entity>
 
-      <a-entity id="rack" Zsquat-rack position="0 0 -1">
+      <a-entity id="rack" squat-rack position="0 0 -1">
         <!-- delete Z from Zsquat-rack to make squat-rack visible-->
         <!-- Sound positioned just behind the lifter (where a coach might be in the gym)-->
         <a-sound id="sound-origin" position = "0 1.5 1" volume="4"></a-sound>

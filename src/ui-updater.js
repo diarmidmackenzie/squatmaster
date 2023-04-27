@@ -34,6 +34,7 @@ AFRAME.registerComponent('ui-updater', {
       repPhase: 'none',  // one of: none, ready, down, up, rest
       repNumber: 0,
       repsToGo: 5,
+      shutUp: false, // set to stop coaching on the set.
       minHeightThisRep: 1000
     }
 
@@ -141,7 +142,11 @@ AFRAME.registerComponent('ui-updater', {
         this.state.repPhase = 'rest'
         this.setMessage('Rep Complete')
         this.repCompleted(true)
-        if (this.state.repsToGo === 1) {
+        if (this.state.repsToGo === 0) {
+          this.playPrompt('#sound-good-job')
+          this.state.shutUp = true
+        }
+        else if (this.state.repsToGo === 1) {
           this.playPrompt('#sound-last-one') 
         }
         else {
@@ -256,7 +261,7 @@ AFRAME.registerComponent('ui-updater', {
     if (!state.calibrated) return
 
     // don't play clips when no reps remaining
-    if (this.state.repsToGo <= 0) return
+    if (this.state.shutUp) return
 
     const origin = document.getElementById('sound-origin')
 
