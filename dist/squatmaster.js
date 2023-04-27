@@ -496,6 +496,7 @@ AFRAME.registerComponent('plane-visualization', {
     const {height, color} = this.data
 
     this.createRing(height, color, 0.8, 0.5)
+    this.createRing(height, color, 1.0, 0.75)
     this.createRing(height, color, 1.2, 1)
 
   },
