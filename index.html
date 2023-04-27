@@ -3,6 +3,32 @@
   <head>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="./dist/squatmaster.js"></script>
+
+    <!-- URL parameters:
+        ?skip=true&vr=true to skip calibration & show a rack
+        ?vr=true to just show a rack
+        ?skip=true to just skip calibration (will be set to sensible default values)
+      -->
+    <script>
+      const queryString = window.location.search;
+      const urlParams = new URLSearchParams(queryString);
+      const vr = urlParams.get('vr')
+      if (vr) {
+        document.addEventListener("DOMContentLoaded", () => {
+          const rackEl = document.getElementById('rack')
+          rackEl.setAttribute('squat-rack', '')
+        });
+      }
+
+      const skip = urlParams.get('skip')
+      if (skip) {
+        document.addEventListener("DOMContentLoaded", () => {
+          const sceneEl = document.querySelector('a-scene')
+          sceneEl.setAttribute('calibration-flow', 'skip: true')
+        });
+      }
+
+    </script>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
@@ -12,8 +38,7 @@
              ui-updater
              nod-shake
              ui-manager
-             calibration-flow="skip: true"> 
-             <!-- set calibration-flow="skip: true">  to skip calibration & work with defaults-->
+             calibration-flow> 
 
       <a-assets>
         <img id="calibration0" src="./assets/images/Calibration UI 0.png"/>
@@ -65,8 +90,7 @@
         </a-entity>
       </a-entity>
 
-      <a-entity id="rack" squat-rack position="0 0 -1">
-        <!-- delete Z from Zsquat-rack to make squat-rack visible-->
+      <a-entity id="rack" position="0 0 -1">
         <!-- Sound positioned just behind the lifter (where a coach might be in the gym)-->
         <a-sound id="sound-origin" position = "0 1.5 1" volume="4"></a-sound>
         <a-sound id="sfx-origin" position = "0 0 0" volume="4"></a-sound>
