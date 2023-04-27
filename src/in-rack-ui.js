@@ -29,14 +29,24 @@ AFRAME.registerComponent('inside-rack-ui', {
   repReport(e) {
 
     const data = e.detail
-    const {repNumber} = data
+    const {repNumber, completed, failed} = data
+
+    console.log("Rep Report", data)
 
     const rep = this.reps[repNumber]
 
     if (!rep) return // user doing more reps than specified!  We don't report them.
 
+    let status
+
+    if (completed) {
+      status = failed ? 'failed' : 'done'
+    }
+    else {
+      status = 'doing'
+    }
     rep.setAttribute('rep-report', {repNumber: repNumber,
-                                    status: data.completed ? 'done' : 'failed',
+                                    status: status,
                                     restPrior: data.restPrior,
                                     timeDown: data.timeDown,
                                     depth: data.depth,
@@ -51,6 +61,7 @@ AFRAME.registerComponent('rep-report', {
   schema: {
     repNumber: { type: 'number'},
     status: { type: 'string', default: 'todo'}, // one of: todo, doing, done, failed
+    restPrior: {type: 'number'},
     timeDown: {type: 'number'},
     depth: {type: 'number'},
     timeUp: {type: 'number'},

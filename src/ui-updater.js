@@ -52,6 +52,7 @@ AFRAME.registerComponent('ui-updater', {
     this.repData = {
       repNumber: 0,
       completed: false,
+      failed: false,
       restPrior: undefined,
       timeDown: undefined,
       depth: undefined,
@@ -81,14 +82,16 @@ AFRAME.registerComponent('ui-updater', {
     this.insideRackUI.setAttribute('inside-rack-ui', {repsToGo: this.state.repsToGo})
   },
 
-  repCompleted(completed) {
+  repCompleted(success) {
 
     // don't count any reps prior to calibration
+    const state = this.el.sceneEl.components['ui-manager'].state
     if (!state.calibrated) return
 
     this.timestamps.finishedRep = Date.now()
 
-    this.repData.completed = completed
+    this.repData.completed = true
+    this.repData.failed = !success
     this.repData.repNumber = this.state.repNumber
     this.repData.timeUp = this.timestamps.finishedRep - this.timestamps.hitBottom
     this.el.emit('rep-report', this.repData)
@@ -180,6 +183,7 @@ AFRAME.registerComponent('ui-updater', {
         // 1st set of data for new rep.
         this.repData.repNumber = this.state.repNumber
         this.repData.completed = false
+        this.repData.failed = false
         this.repData.restPrior = this.timestamps.beganRep - this.timestamps.finishedLast
         this.repData.timeDown = undefined
         this.repData.depth = undefined
