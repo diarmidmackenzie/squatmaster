@@ -238,6 +238,8 @@ AFRAME.registerComponent('calibration-flow', {
       case 'review':
         // No action
         // Final move step 6 -> 7 is based on 'reached-hooks' event
+        // but can also use forward button
+        this.moveToStage('done')
         break
 
       case 'done':
@@ -302,7 +304,7 @@ AFRAME.registerComponent('calibration-flow', {
 
   updateUI() {
 
-    const forward = (this.stage !== 'review') 
+    const forward = true // always a forward button
     const back = (this.stage !== 'start')
 
     this.calibrationUI.setAttribute('calibration-ui',
