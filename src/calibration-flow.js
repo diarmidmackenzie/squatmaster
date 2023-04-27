@@ -415,7 +415,7 @@ AFRAME.registerComponent('animated-button', {
 
     const button = document.createElement('a-entity')
     button.setAttribute('geometry', 'primitive: circle; radius: 0.28; segments: 128')
-    button.setAttribute('material', 'color: white; opacity: 0.8; transparent: true; shader: flat')
+    button.setAttribute('material', 'color: white; shader: flat')
     button.classList.add('clickable');
     this.el.appendChild(button)
   
