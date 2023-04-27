@@ -111,6 +111,10 @@ AFRAME.registerComponent('ui-updater', {
     this.el.emit('rep-report', this.repData)
   },
 
+  reachedHooks() {
+    this.setMessage('Take weight of bar')
+  },
+
   leftHooks() {
     // no update needed
   },
