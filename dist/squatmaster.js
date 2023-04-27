@@ -762,6 +762,7 @@ AFRAME.registerComponent('calibration-flow', {
   playSFX(src) {
     const origin = document.getElementById('sfx-origin')
 
+    origin.setAttribute('sound', {src: '', autoplay: false})
     origin.setAttribute('sound', {src: src, autoplay: true})
   },
 
@@ -771,6 +772,7 @@ AFRAME.registerComponent('calibration-flow', {
     // not based on nods...
 
     if (this.stage === 'review') {
+      this.playSFX('#sfx-interaction')
       this.moveToStage('done')
     }
   },
@@ -806,11 +808,13 @@ AFRAME.registerComponent('calibration-flow', {
         rack.object3D.quaternion.setFromUnitVectors(forward, direction)
 
         this.moveToStage('bar')
+        this.playSFX('#sfx-interaction')
         break
 
       case 'bar':
         // no data to record yet.
         this.moveToStage('hooks')
+        this.playSFX('#sfx-interaction')
         break
 
       case 'hooks':
@@ -819,24 +823,29 @@ AFRAME.registerComponent('calibration-flow', {
         pos.copy(this.getBarPosition())
         this.el.setAttribute('bar-monitor', {hookPosition: pos})
         this.moveToStage('top')
+
+        this.playSFX('#sfx-data-saved')
         break
   
       case 'top':
         ypos = this.getBarPosition().y
         this.el.setAttribute('bar-monitor', {topHeight: ypos})
         this.moveToStage('depth')
+        this.playSFX('#sfx-data-saved')
         break
 
       case 'depth':
         ypos = this.getBarPosition().y
         this.el.setAttribute('bar-monitor', {targetDepth: ypos})
         this.moveToStage('safety')
+        this.playSFX('#sfx-data-saved')
         break
 
       case 'safety':
         ypos = this.getBarPosition().y
         this.el.setAttribute('bar-monitor', {safetyPinHeight: ypos})
         this.moveToStage('review')
+        this.playSFX('#sfx-data-saved')
         break
 
       case 'review':
@@ -846,6 +855,7 @@ AFRAME.registerComponent('calibration-flow', {
 
       case 'done':
         this.endCalibrationProcess()
+        this.playSFX('#sfx-interaction')
         break
 
       default:
@@ -864,30 +874,37 @@ AFRAME.registerComponent('calibration-flow', {
 
       case 'bar':
         this.moveBackToStage('start')
+        this.playSFX('#sfx-data-reoved')
         break
 
       case 'hooks':
         this.moveBackToStage('bar')
+        this.playSFX('#sfx-data-reoved')
         break
   
       case 'top':
         this.moveBackToStage('hooks')
+        this.playSFX('#sfx-data-reoved')
         break
 
       case 'depth':
         this.moveBackToStage('top')
+        this.playSFX('#sfx-data-reoved')
         break
 
       case 'safety':
         this.moveBackToStage('depth')
+        this.playSFX('#sfx-data-reoved')
         break
 
       case 'review':
         this.moveBackToStage('safety')
+        this.playSFX('#sfx-data-reoved')
         break
 
       case 'done':
         this.moveBackToStage('review')
+        this.playSFX('#sfx-data-reoved')
         break
          
       default:
