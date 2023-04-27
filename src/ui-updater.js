@@ -83,6 +83,9 @@ AFRAME.registerComponent('ui-updater', {
 
   repCompleted(completed) {
 
+    // don't count any reps prior to calibration
+    if (!state.calibrated) return
+
     this.timestamps.finishedRep = Date.now()
 
     this.repData.completed = completed
