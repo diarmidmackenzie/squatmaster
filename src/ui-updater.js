@@ -255,6 +255,9 @@ AFRAME.registerComponent('ui-updater', {
     const state = this.el.sceneEl.components['ui-manager'].state
     if (!state.calibrated) return
 
+    // don't play clips when no reps remaining
+    if (this.state.repsToGo <= 0) return
+
     const origin = document.getElementById('sound-origin')
 
     origin.removeAttribute('sound')
