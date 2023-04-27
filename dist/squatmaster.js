@@ -1638,7 +1638,8 @@ AFRAME.registerComponent('ui-updater', {
     this.repData.failed = !success
     this.repData.repNumber = this.state.repNumber
     this.repData.timeUp = this.timestamps.finishedRep - this.timestamps.hitBottom
-    this.el.emit('rep-report', this.repData)
+    this.reportRep()
+    
     this.state.repsToGo--
     this.state.repNumber++
     this.insideRackUI.setAttribute('inside-rack-ui', {repsToGo: this.state.repsToGo})
@@ -1648,8 +1649,13 @@ AFRAME.registerComponent('ui-updater', {
     this.timestamps.finishedLast = Date.now()
   },
 
-  reachedHooks() {
+  reportRep() {
+    const state = this.el.sceneEl.components['ui-manager'].state
+    if (!state.calibrated) return
+    this.el.emit('rep-report', this.repData)
+  },
 
+  reachedHooks() {
     this.setMessage('Take weight of bar')
   },
 
@@ -1687,10 +1693,11 @@ AFRAME.registerComponent('ui-updater', {
         this.setMessage('Incomplete Rep')
         this.playPrompt('#sound-not-quite')
 
+        // Only report rep data if calibration completed...
         this.repData.repNumber = this.state.repNumber
         const targetDepth = this.el.sceneEl.components['bar-monitor'].data.targetDepth
         this.repData.depth = this.state.minHeightThisRep - targetDepth
-        this.el.emit('rep-report', this.repData)
+        this.reportRep()
 
         // wipe data about previous effort at depth.
         this.state.minHeightThisRep = 1000
@@ -1743,7 +1750,7 @@ AFRAME.registerComponent('ui-updater', {
         this.repData.turnSpeed = undefined
         this.repData.deviationLR = undefined
         this.repData.deviationFB = undefined
-        this.el.emit('rep-report', this.repData)
+        this.reportRep()
         break
 
       case 'up':
@@ -1772,7 +1779,7 @@ AFRAME.registerComponent('ui-updater', {
         this.timestamps.hitDepth = Date.now()
 
         this.repData.timeDown = this.timestamps.hitDepth - this.timestamps.beganRep
-        this.el.emit('rep-report', this.repData)
+        this.reportRep()
         break
   
       case 'up':
@@ -1793,7 +1800,7 @@ AFRAME.registerComponent('ui-updater', {
         // assume we now hit our lowest point.
         const targetDepth = this.el.sceneEl.components['bar-monitor'].data.targetDepth
         this.repData.depth = this.state.minHeightThisRep - targetDepth
-        this.el.emit('rep-report', this.repData)
+        this.reportRep()
 
         break
 
