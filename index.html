@@ -43,6 +43,12 @@
         <audio id="sound-last-one" src="./assets/audio/BL-0012_Last-one_48k_stereo.mp3"></audio>
         <audio id="sound-not-quite" src="./assets/audio/BL-0013_Not-quite-deep-enough_48k_stereo.mp3"></audio>
 
+        <audio id="sfx-data-removed" src="./assets/sfx/data-removed.mp3" preload="auto"></audio>
+        <audio id="sfx-data-saved" src="./assets/sfx/data-saved.mp3" preload="auto"></audio>
+        <audio id="sfx-interaction" src="./assets/sfx/interaction.mp3" preload="auto"></audio>
+        <audio id="sfx-hit-depth" src="./assets/sfx/target-depth.mp3" preload="auto"></audio>
+        <audio id="sfx-welcome" src="./assets/sfx/welcome.mp3" preload="auto"></audio>
+
         <video id="video1" autoplay='true' muted playsinline webkit-playsinline src="../assets/video/squat-video1.mp4" type="video/mp4">
     </video>
       </a-assets>
@@ -62,6 +68,7 @@
         <!-- delete Z from Zsquat-rack to make squat-rack visible-->
         <!-- Sound positioned just behind the lifter (where a coach might be in the gym)-->
         <a-sound id="sound-origin" position = "0 1.5 1" volume="4"></a-sound>
+        <a-sound id="sfx-origin" position = "0 0 0" volume="4"></a-sound>
       </a-entity>
 
       <a-entity id="inside-rack-ui" position="0 1 -4" inside-rack-ui visible="false"></a-entity>

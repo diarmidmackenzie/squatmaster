@@ -675,7 +675,9 @@ AFRAME.registerComponent('calibration-flow', {
     this.directionVector = new THREE.Vector3()
 
     this.el.addEventListener('enter-vr', () => {
-      this.playPrompt(this.stage)
+      this.playSFX('#sfx-welcome')
+      setTimeout(() => this.playPrompt(this.stage), 5000)
+      
       const video = document.querySelector('#video1')
       if (video) {
         video.play()
@@ -755,6 +757,12 @@ AFRAME.registerComponent('calibration-flow', {
         origin.components.sound.playSound();
       }, 4000)
     }
+  },
+
+  playSFX(src) {
+    const origin = document.getElementById('sfx-origin')
+
+    origin.setAttribute('sound', {src: src, autoplay: true})
   },
 
   reachedHooks() {
@@ -1595,6 +1603,7 @@ AFRAME.registerComponent('ui-updater', {
 
       case 'down':
         this.setMessage('Hit Depth!')
+        this.playSFX('#sfx-hit-depth')
         this.state.repPhase = 'up'
         break
   
@@ -1633,11 +1642,28 @@ AFRAME.registerComponent('ui-updater', {
   },
 
   playPrompt(src) {
+
+    // don't play these clips until calibration is done.
+    const state = this.el.sceneEl.components['ui-manager'].state
+    if (!state.calibrated) return
+
     const origin = document.getElementById('sound-origin')
 
     origin.removeAttribute('sound')
     origin.setAttribute('sound', {src: src, autoplay: true})
   },
+
+  playSFX(src) {
+
+    // don't play these clips until calibration is done.
+    const state = this.el.sceneEl.components['ui-manager'].state
+    if (!state.calibrated) return
+    
+    const origin = document.getElementById('sfx-origin')
+
+    origin.setAttribute('sound', {src: '', autoplay: false})
+    origin.setAttribute('sound', {src: src, autoplay: true})
+  }
 
 })
 

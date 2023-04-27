@@ -171,6 +171,7 @@ AFRAME.registerComponent('ui-updater', {
 
       case 'down':
         this.setMessage('Hit Depth!')
+        this.playSFX('#sfx-hit-depth')
         this.state.repPhase = 'up'
         break
   
@@ -219,5 +220,17 @@ AFRAME.registerComponent('ui-updater', {
     origin.removeAttribute('sound')
     origin.setAttribute('sound', {src: src, autoplay: true})
   },
+
+  playSFX(src) {
+
+    // don't play these clips until calibration is done.
+    const state = this.el.sceneEl.components['ui-manager'].state
+    if (!state.calibrated) return
+    
+    const origin = document.getElementById('sfx-origin')
+
+    origin.setAttribute('sound', {src: '', autoplay: false})
+    origin.setAttribute('sound', {src: src, autoplay: true})
+  }
 
 })

@@ -62,7 +62,9 @@ AFRAME.registerComponent('calibration-flow', {
     this.directionVector = new THREE.Vector3()
 
     this.el.addEventListener('enter-vr', () => {
-      this.playPrompt(this.stage)
+      this.playSFX('#sfx-welcome')
+      setTimeout(() => this.playPrompt(this.stage), 5000)
+      
       const video = document.querySelector('#video1')
       if (video) {
         video.play()
@@ -142,6 +144,12 @@ AFRAME.registerComponent('calibration-flow', {
         origin.components.sound.playSound();
       }, 4000)
     }
+  },
+
+  playSFX(src) {
+    const origin = document.getElementById('sfx-origin')
+
+    origin.setAttribute('sound', {src: src, autoplay: true})
   },
 
   reachedHooks() {
