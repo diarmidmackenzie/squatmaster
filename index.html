@@ -43,6 +43,8 @@
         <audio id="sound-last-one" src="./assets/audio/BL-0012_Last-one_48k_stereo.mp3"></audio>
         <audio id="sound-not-quite" src="./assets/audio/BL-0013_Not-quite-deep-enough_48k_stereo.mp3"></audio>
 
+        <video id="video1" autoplay='true' muted playsinline webkit-playsinline src="../assets/video/squat-video1.mp4" type="video/mp4">
+    </video>
       </a-assets>
 
       <!-- default camera; no movement controls - not suitable for MR-->
@@ -65,6 +67,10 @@
       <a-entity id="inside-rack-ui" position="0 1 -4" inside-rack-ui visible="false"></a-entity>
       <a-entity id="calibration-ui" position="0 1 -4" visible="true"></a-entity>
       <a-entity id="outside-rack-ui" position="0 1 -2" outside-rack-ui visible="false"></a-entity>
+
+      <a-box id="video-frame" position="0 1 -5" depth="0.1" width="1.16" height="2" color='black'>
+        <a-plane id="video-feed" position="0 0 0.06" width="1.08" height="1.92" src="#video1"></a-plane>
+      </a-box>
     </a-scene>
   </body>
 </html>

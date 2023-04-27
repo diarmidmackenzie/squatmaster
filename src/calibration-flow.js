@@ -63,6 +63,10 @@ AFRAME.registerComponent('calibration-flow', {
 
     this.el.addEventListener('enter-vr', () => {
       this.playPrompt(this.stage)
+      const video = document.querySelector('#video1')
+      if (video) {
+        video.play()
+      }
     })
 
     if (this.data.skip) {
