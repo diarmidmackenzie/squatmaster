@@ -1152,7 +1152,7 @@ AFRAME.registerComponent('inside-rack-ui', {
                                     status: status,
                                     restPrior: data.restPrior / 1000, // msecs -> secs
                                     timeDown: data.timeDown / 1000, // msecs -> secs
-                                    depth: data.depth * 100, // m -> cm
+                                    depth: -data.depth * 100, // m -> cm, flip sign.
                                     timeUp: data.timeUp / 1000, // msecs -> secs
                                     turnSpeed: data.turnSpeed,
                                     daviationLR: data.deviationLR, 
@@ -1221,6 +1221,8 @@ AFRAME.registerComponent('rep-report', {
       this.number.object3D.visible = false
     }
 
+    this.deleteReportStats()
+
     reportStats.forEach((stat, index) => {
       const {key, units} = stat
 
@@ -1278,7 +1280,7 @@ AFRAME.registerComponent('rep-report-stat', {
 
     this.circle = document.createElement('a-circle')
     this.circle.setAttribute('radius', 0.3)
-    this.circle.setAttribute('material', {opacity: 0.8, transparent: true})
+    this.circle.setAttribute('material', {opacity: 0.8, transparent: true, color: 'white'})
     this.circle.object3D.position.y = this.data.ypos
     this.el.appendChild(this.circle)
 
@@ -1294,6 +1296,13 @@ AFRAME.registerComponent('rep-report-stat', {
                                       wrapCount: 10,
                                       value: numberText,
                                       align: 'center'})
+    
+    if (this.data.value < 0) {
+      this.circle.setAttribute('material', {color: 'orange'})
+    }
+    else {
+      this.circle.setAttribute('material', {color: 'white'})
+    }
   }
 })
 
@@ -1646,8 +1655,6 @@ AFRAME.registerComponent('ui-updater', {
 
   leftHooks() {
     // no update needed
-    // track time, count this as "rest" start for rep 1
-    this.timestamps.finishedLast = Date.now()
   },
 
   shoulderedBar() {
@@ -1671,12 +1678,22 @@ AFRAME.registerComponent('ui-updater', {
         this.state.repPhase = 'ready'
         this.setMessage('Ready!')
         this.playPrompt('#sound-here-we-go')
+        // track time, count this as "rest" start for rep 1
+        this.timestamps.finishedLast = Date.now()
         break
 
       case 'down':
         this.state.repPhase = 'rest'
         this.setMessage('Incomplete Rep')
         this.playPrompt('#sound-not-quite')
+
+        this.repData.repNumber = this.state.repNumber
+        const targetDepth = this.el.sceneEl.components['bar-monitor'].data.targetDepth
+        this.repData.depth = this.state.minHeightThisRep - targetDepth
+        this.el.emit('rep-report', this.repData)
+
+        // wipe data about previous effort at depth.
+        this.state.minHeightThisRep = 1000
         break
 
       case 'up':
@@ -1774,7 +1791,7 @@ AFRAME.registerComponent('ui-updater', {
 
       case 'up':
         // assume we now hit our lowest point.
-        const targetDepth =     barPosition = this.el.sceneEl.components['bar-monitor'].data.targetDepth
+        const targetDepth = this.el.sceneEl.components['bar-monitor'].data.targetDepth
         this.repData.depth = this.state.minHeightThisRep - targetDepth
         this.el.emit('rep-report', this.repData)
 
