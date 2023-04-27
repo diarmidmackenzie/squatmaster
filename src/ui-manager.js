@@ -18,6 +18,7 @@ AFRAME.registerComponent('ui-manager', {
     this.calibrationUI = document.getElementById('calibration-ui')
     this.insideRackUI = document.getElementById('inside-rack-ui')
     this.outsideRackUI = document.getElementById('outside-rack-ui')
+    this.cursor = document.getElementById('cursor')
 
     this.updateUIs()
   },
@@ -57,11 +58,14 @@ AFRAME.registerComponent('ui-manager', {
         updateVisibility(this.insideRackUI, false)
         updateVisibility(this.outsideRackUI, true)
       }
+
+      updateVisibility(this.cursor, false)
     }
     else {
       updateVisibility(this.calibrationUI, true)
       updateVisibility(this.insideRackUI, false)
       updateVisibility(this.outsideRackUI, false)
+      updateVisibility(this.cursor, true)
     }
   }
 })
