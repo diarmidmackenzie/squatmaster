@@ -4,6 +4,8 @@
 
 AFRAME.registerComponent('ui-updater', {
 
+  dependencies: ['bar-position', 'bar-monitor'],
+
   init() {
 
     this.reachedHooks = this.reachedHooks.bind(this)
@@ -31,7 +33,16 @@ AFRAME.registerComponent('ui-updater', {
     this.state = {
       repPhase: 'none',  // one of: none, ready, down, up, rest
       repNumber: 0,
-      repsToGo: 5
+      repsToGo: 5,
+      minHeightThisRep: 1000
+    }
+
+    this.timestamps = {
+      finishedLast: undefined,
+      beganRep: undefined,
+      hitDepth: undefined,
+      hitBottom: undefined,
+      finishedRep: undefined
     }
 
     this.insideRackUI = document.querySelector('#inside-rack-ui')
@@ -40,13 +51,13 @@ AFRAME.registerComponent('ui-updater', {
     this.repData = {
       repNumber: 0,
       completed: false,
-      restPrior: 0,
-      timeDown: 0,
-      depth: 0,
-      timeUp: 0,
-      turnSpeed: 0,
-      deviationLR: 0,
-      deviationFB: 0
+      restPrior: undefined,
+      timeDown: undefined,
+      depth: undefined,
+      timeUp: undefined,
+      turnSpeed: undefined, // TO DO
+      deviationLR: undefined, // TO DO
+      deviationFB: undefined  // TO DO
     }
   },
 
@@ -71,13 +82,19 @@ AFRAME.registerComponent('ui-updater', {
 
   repCompleted(completed) {
 
-    // !! Still need to fill in rep data.
+    this.timestamps.finishedRep = Date.now()
+
     this.repData.completed = completed
     this.repData.repNumber = this.state.repNumber
+    this.repData.timeUp = this.timestamps.finishedRep - this.timestamps.hitBottom
     this.el.emit('rep-report', this.repData)
     this.state.repsToGo--
     this.state.repNumber++
     this.insideRackUI.setAttribute('inside-rack-ui', {repsToGo: this.state.repsToGo})
+
+    // set up state for tracking next rep
+    this.state.minHeightThisRep = 1000
+    this.timestamps.finishedLast = Date.now()
   },
 
   reachedHooks() {
@@ -87,6 +104,8 @@ AFRAME.registerComponent('ui-updater', {
 
   leftHooks() {
     // no update needed
+    // track time, count this as "rest" start for rep 1
+    this.timestamps.finishedLast = Date.now()
   },
 
   shoulderedBar() {
@@ -148,6 +167,19 @@ AFRAME.registerComponent('ui-updater', {
       case 'rest':
         this.state.repPhase = 'down'
         this.setMessage('Going down...')
+        this.timestamps.beganRep = Date.now()
+
+        // 1st set of data for new rep.
+        this.repData.repNumber = this.state.repNumber
+        this.repData.completed = false
+        this.repData.restPrior = this.timestamps.beganRep - this.timestamps.finishedLast
+        this.repData.timeDown = undefined
+        this.repData.depth = undefined
+        this.repData.timeUp = undefined
+        this.repData.turnSpeed = undefined
+        this.repData.deviationLR = undefined
+        this.repData.deviationFB = undefined
+        this.el.emit('rep-report', this.repData)
         break
 
       case 'up':
@@ -173,6 +205,10 @@ AFRAME.registerComponent('ui-updater', {
         this.setMessage('Hit Depth!')
         this.playSFX('#sfx-hit-depth')
         this.state.repPhase = 'up'
+        this.timestamps.hitDepth = Date.now()
+
+        this.repData.timeDown = this.timestamps.hitDepth - this.timestamps.beganRep
+        this.el.emit('rep-report', this.repData)
         break
   
       case 'up':
@@ -190,11 +226,15 @@ AFRAME.registerComponent('ui-updater', {
     switch (this.state.repPhase) {
 
       case 'up':
-        // expected.  No action / state change needed
+        // assume we now hit our lowest point.
+        const targetDepth =     barPosition = this.el.sceneEl.components['bar-monitor'].data.targetDepth
+        this.repData.depth = this.state.minHeightThisRep - targetDepth
+        this.el.emit('rep-report', this.repData)
+
         break
 
       default: 
-        console.error("Lowered From Top in unexpected state: ", this.state.repPhase)
+        console.error("Upwards from Target Depth in unexpected state: ", this.state.repPhase)
     }
   },
 
@@ -231,6 +271,15 @@ AFRAME.registerComponent('ui-updater', {
 
     origin.setAttribute('sound', {src: '', autoplay: false})
     origin.setAttribute('sound', {src: src, autoplay: true})
+  },
+
+  tick() {
+    barPosition = this.el.sceneEl.components['bar-position'].barPosition
+
+    if (barPosition.y < this.state.minHeightThisRep) {
+      this.state.minHeightThisRep = barPosition.y
+      this.timestamps.hitBottom = Date.now() // should be accurate by end of rep!
+    }
   }
 
 })
