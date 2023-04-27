@@ -209,6 +209,11 @@ AFRAME.registerComponent('ui-updater', {
   },
 
   playPrompt(src) {
+
+    // don't play these clips until calibration is done.
+    const state = this.el.sceneEl.components['ui-manager'].state
+    if (!state.calibrated) return
+
     const origin = document.getElementById('sound-origin')
 
     origin.removeAttribute('sound')

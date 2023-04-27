@@ -217,13 +217,11 @@ AFRAME.registerComponent('bar-monitor', {
 
   createPlanes() {
 
-    this.aboveTopPlane = this.createPlane(this.data.topHeight, 'outline', 'white')
-    this.topPlaneUpwards = this.createPlane(this.data.topHeight - 0.05, 'outline', 'green')
-    //this.topPlaneDownwards = this.createPlane(this.data.topHeight - 0.05, , 'outline', 'white')
-    this.depthPlaneUpwards = this.createPlane(this.data.targetDepth, 'outline', 'green')
-    //this.depthPlaneDownwards = this.createPlane(this.data.targetDepth, , 'outline', 'white')
-    this.safetyPlaneTop = this.createPlane(this.data.safetyPinHeight, 'outline', 'orange')
-    this.safetyPlaneBottom = this.createPlane(this.data.safetyPinHeight - 0.05, 'outline', 'red')
+    //this.aboveTopPlane = this.createPlane(this.data.topHeight, 'green')
+    this.topPlaneUpwards = this.createPlane(this.data.topHeight - 0.05, 'green')
+    this.depthPlaneUpwards = this.createPlane(this.data.targetDepth, 'green')
+    this.safetyPlaneTop = this.createPlane(this.data.safetyPinHeight, 'orange')
+    this.safetyPlaneBottom = this.createPlane(this.data.safetyPinHeight - 0.05, 'red')
   },
 
   deletePlanes() {
@@ -236,40 +234,22 @@ AFRAME.registerComponent('bar-monitor', {
 
     deletePlane(this.aboveTopPlane)
     deletePlane(this.topPlaneUpwards)
-    deletePlane(this.topPlaneDownwards)
     deletePlane(this.depthPlaneUpwards)
-    deletePlane(this.depthPlaneDownwards)
     deletePlane(this.safetyPlaneTop)
     deletePlane(this.safetyPlaneBottom)
 
     this.aboveTopPlane = null
     this.aboveTopPlane = null
     this.topPlaneUpwards = null
-    this.topPlaneDownwards = null
     this.depthPlaneUpwards = null
-    this.depthPlaneDownwards = null
     this.safetyPlaneTop = null
     this.safetyPlaneBottom = null
   },
 
-  createPlane(height, style, color, side) {
-    const plane = document.createElement('a-plane')
-    plane.setAttribute('width', this.data.rackWidth)
-    plane.setAttribute('height', this.data.rackDepth)
-    plane.object3D.position.y = height
-    plane.object3D.rotation.x = Math.PI / 2
-
-    if (style === 'transparent') {
-      plane.setAttribute('material', {opacity: this.data.opacity,
-                                      transparent: true,
-                                      color: color,
-                                      side: side})
-    }
-    else {
-      console.assert(style === 'outline')
-      plane.setAttribute('polygon-wireframe', {color: color})
-    }
-
+  createPlane(height, color) {
+    const plane = document.createElement('a-entity')
+    plane.setAttribute('plane-visualization', {height: height, color: color})
+    
     const rackEl = document.querySelector('#rack')
     rackEl.appendChild(plane)
 
@@ -504,6 +484,40 @@ AFRAME.registerComponent('bar-monitor', {
   }
 })
 
+AFRAME.registerComponent('plane-visualization', {
+
+  schema: {
+    height: {default: 0},
+    color: {default: 'red'}
+  },
+
+  init() {
+
+    const {height, color} = this.data
+
+    this.createRing(height, color, 0.4, 1)
+    this.createRing(height, color, 0.8, 0.6)
+    this.createRing(height, color, 1.2, 0.2)
+
+  },
+
+  createRing(height, color, radius, opacity) {
+
+    const ring = document.createElement('a-torus')
+    ring.object3D.rotation.x = Math.PI / 2
+    ring.object3D.position.y = height
+    ring.setAttribute('radius', radius)
+    ring.setAttribute('radius-tubular', 0.001)
+    ring.setAttribute('segments-tubular', 128)
+    ring.setAttribute('material', {color: color,
+                                   opacity: opacity,
+                                   transparent: (opacity < 1)})
+    this.el.appendChild(ring)
+
+    return ring
+  }
+})
+
 /***/ }),
 
 /***/ "./src/bar-position.js":
@@ -662,6 +676,10 @@ AFRAME.registerComponent('calibration-flow', {
 
     this.el.addEventListener('enter-vr', () => {
       this.playPrompt(this.stage)
+      const video = document.querySelector('#video1')
+      if (video) {
+        video.play()
+      }
     })
 
     if (this.data.skip) {
