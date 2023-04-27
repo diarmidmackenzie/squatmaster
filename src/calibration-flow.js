@@ -447,8 +447,8 @@ AFRAME.registerComponent('animated-button', {
       animatedRing.setAttribute('animation', {property: 'geometry.thetaLength',
                                               from: 0,
                                               to: 360,
-                                              dur: 1000,
-                                              easing: 'linear'})
+                                              dur: 1150,
+                                              easing: 'easeInQuad'})
     })
   
     button.addEventListener('mouseleave', () => {
