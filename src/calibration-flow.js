@@ -142,7 +142,7 @@ AFRAME.registerComponent('calibration-flow', {
       setTimeout(() => {
         origin.setAttribute('sound', {src: calibrationUIFollowOnSounds2[stage], autoplay: true})
         origin.components.sound.playSound();
-      }, 4000)
+      }, 5000)
     }
   },
 
