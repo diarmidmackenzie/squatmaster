@@ -1,6 +1,8 @@
 # SquatMaster
  Mixed Reality Coaching for Barbell Squats
 
+![image-20230430122310226](image-20230430122310226.png)
+
 
 
 ## About SquatMaster
