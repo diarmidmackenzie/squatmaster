@@ -15,7 +15,7 @@ SquatMaster was an entry at the Meta Reality Labs Presence Platform Hackathon Ev
 
 The submission for the event consisted of
 
-- the code labelled v0.0.1 in this repo, published at https://squatmaster.netlify.app
+- a build of the code labelled v0.0.1 in this repo, published at https://squatmaster.netlify.app
 - a video showing the app in action: https://youtu.be/MqmyWagB1O8
 - an accompanying slide deck: https://shorturl.at/OQUV1
 
