@@ -62,7 +62,13 @@ AFRAME.registerComponent('calibration-flow', {
     this.directionVector = new THREE.Vector3()
 
     this.el.addEventListener('enter-vr', () => {
-      this.playPrompt(this.stage)
+      this.playSFX('#sfx-welcome')
+      setTimeout(() => this.playPrompt(this.stage), 5000)
+      
+      const video = document.querySelector('#video1')
+      if (video) {
+        video.play()
+      }
     })
 
     if (this.data.skip) {
@@ -136,8 +142,15 @@ AFRAME.registerComponent('calibration-flow', {
       setTimeout(() => {
         origin.setAttribute('sound', {src: calibrationUIFollowOnSounds2[stage], autoplay: true})
         origin.components.sound.playSound();
-      }, 4000)
+      }, 5000)
     }
+  },
+
+  playSFX(src) {
+    const origin = document.getElementById('sfx-origin')
+
+    origin.setAttribute('sound', {src: '', autoplay: false})
+    origin.setAttribute('sound', {src: src, autoplay: true})
   },
 
   reachedHooks() {
@@ -146,6 +159,7 @@ AFRAME.registerComponent('calibration-flow', {
     // not based on nods...
 
     if (this.stage === 'review') {
+      this.playSFX('#sfx-interaction')
       this.moveToStage('done')
     }
   },
@@ -181,11 +195,13 @@ AFRAME.registerComponent('calibration-flow', {
         rack.object3D.quaternion.setFromUnitVectors(forward, direction)
 
         this.moveToStage('bar')
+        this.playSFX('#sfx-interaction')
         break
 
       case 'bar':
         // no data to record yet.
         this.moveToStage('hooks')
+        this.playSFX('#sfx-interaction')
         break
 
       case 'hooks':
@@ -194,33 +210,42 @@ AFRAME.registerComponent('calibration-flow', {
         pos.copy(this.getBarPosition())
         this.el.setAttribute('bar-monitor', {hookPosition: pos})
         this.moveToStage('top')
+
+        this.playSFX('#sfx-data-saved')
         break
   
       case 'top':
         ypos = this.getBarPosition().y
         this.el.setAttribute('bar-monitor', {topHeight: ypos})
         this.moveToStage('depth')
+        this.playSFX('#sfx-data-saved')
         break
 
       case 'depth':
         ypos = this.getBarPosition().y
         this.el.setAttribute('bar-monitor', {targetDepth: ypos})
         this.moveToStage('safety')
+        this.playSFX('#sfx-data-saved')
         break
 
       case 'safety':
         ypos = this.getBarPosition().y
         this.el.setAttribute('bar-monitor', {safetyPinHeight: ypos})
         this.moveToStage('review')
+        this.playSFX('#sfx-data-saved')
         break
 
       case 'review':
         // No action
         // Final move step 6 -> 7 is based on 'reached-hooks' event
+        // but can also use forward button
+        this.moveToStage('done')
+        this.playSFX('#sfx-interaction')
         break
 
       case 'done':
         this.endCalibrationProcess()
+        this.playSFX('#sfx-interaction')
         break
 
       default:
@@ -239,30 +264,37 @@ AFRAME.registerComponent('calibration-flow', {
 
       case 'bar':
         this.moveBackToStage('start')
+        this.playSFX('#sfx-data-reoved')
         break
 
       case 'hooks':
         this.moveBackToStage('bar')
+        this.playSFX('#sfx-data-reoved')
         break
   
       case 'top':
         this.moveBackToStage('hooks')
+        this.playSFX('#sfx-data-reoved')
         break
 
       case 'depth':
         this.moveBackToStage('top')
+        this.playSFX('#sfx-data-reoved')
         break
 
       case 'safety':
         this.moveBackToStage('depth')
+        this.playSFX('#sfx-data-reoved')
         break
 
       case 'review':
         this.moveBackToStage('safety')
+        this.playSFX('#sfx-data-reoved')
         break
 
       case 'done':
         this.moveBackToStage('review')
+        this.playSFX('#sfx-data-reoved')
         break
          
       default:
@@ -273,7 +305,7 @@ AFRAME.registerComponent('calibration-flow', {
 
   updateUI() {
 
-    const forward = (this.stage !== 'review') 
+    const forward = true // always a forward button
     const back = (this.stage !== 'start')
 
     this.calibrationUI.setAttribute('calibration-ui',
@@ -386,7 +418,7 @@ AFRAME.registerComponent('animated-button', {
 
     const button = document.createElement('a-entity')
     button.setAttribute('geometry', 'primitive: circle; radius: 0.28; segments: 128')
-    button.setAttribute('material', 'color: white; opacity: 0.8; transparent: true; shader: flat')
+    button.setAttribute('material', 'color: white; shader: flat')
     button.classList.add('clickable');
     this.el.appendChild(button)
   
@@ -418,8 +450,8 @@ AFRAME.registerComponent('animated-button', {
       animatedRing.setAttribute('animation', {property: 'geometry.thetaLength',
                                               from: 0,
                                               to: 360,
-                                              dur: 1000,
-                                              easing: 'linear'})
+                                              dur: 1150,
+                                              easing: 'easeInQuad'})
     })
   
     button.addEventListener('mouseleave', () => {

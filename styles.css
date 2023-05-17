@@ -1,0 +1,14 @@
+.a-enter-vr-button {
+  display: none
+}
+
+.a-enter-ar-button {
+  background: url('./assets/images/enter-immersive.png');
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size: 150px;
+  width: 150px;
+  height: 150px;
+  border: none;
+  border-radius: 50%;
+}

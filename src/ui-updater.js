@@ -4,6 +4,8 @@
 
 AFRAME.registerComponent('ui-updater', {
 
+  dependencies: ['bar-position', 'bar-monitor'],
+
   init() {
 
     this.reachedHooks = this.reachedHooks.bind(this)
@@ -31,7 +33,17 @@ AFRAME.registerComponent('ui-updater', {
     this.state = {
       repPhase: 'none',  // one of: none, ready, down, up, rest
       repNumber: 0,
-      repsToGo: 5
+      repsToGo: 5,
+      shutUp: false, // set to stop coaching on the set.
+      minHeightThisRep: 1000
+    }
+
+    this.timestamps = {
+      finishedLast: undefined,
+      beganRep: undefined,
+      hitDepth: undefined,
+      hitBottom: undefined,
+      finishedRep: undefined
     }
 
     this.insideRackUI = document.querySelector('#inside-rack-ui')
@@ -40,13 +52,14 @@ AFRAME.registerComponent('ui-updater', {
     this.repData = {
       repNumber: 0,
       completed: false,
-      restPrior: 0,
-      timeDown: 0,
-      depth: 0,
-      timeUp: 0,
-      turnSpeed: 0,
-      deviationLR: 0,
-      deviationFB: 0
+      failed: false,
+      restPrior: undefined,
+      timeDown: undefined,
+      depth: undefined,
+      timeUp: undefined,
+      turnSpeed: undefined, // TO DO
+      deviationLR: undefined, // TO DO
+      deviationFB: undefined  // TO DO
     }
   },
 
@@ -69,19 +82,36 @@ AFRAME.registerComponent('ui-updater', {
     this.insideRackUI.setAttribute('inside-rack-ui', {repsToGo: this.state.repsToGo})
   },
 
-  repCompleted(completed) {
+  repCompleted(success) {
 
-    // !! Still need to fill in rep data.
-    this.repData.completed = completed
+    // don't count any reps prior to calibration
+    const state = this.el.sceneEl.components['ui-manager'].state
+    if (!state.calibrated) return
+
+    this.timestamps.finishedRep = Date.now()
+
+    this.repData.completed = true
+    this.repData.failed = !success
     this.repData.repNumber = this.state.repNumber
-    this.el.emit('rep-report', this.repData)
+    this.repData.timeUp = this.timestamps.finishedRep - this.timestamps.hitBottom
+    this.reportRep()
+    
     this.state.repsToGo--
     this.state.repNumber++
     this.insideRackUI.setAttribute('inside-rack-ui', {repsToGo: this.state.repsToGo})
+
+    // set up state for tracking next rep
+    this.state.minHeightThisRep = 1000
+    this.timestamps.finishedLast = Date.now()
+  },
+
+  reportRep() {
+    const state = this.el.sceneEl.components['ui-manager'].state
+    if (!state.calibrated) return
+    this.el.emit('rep-report', this.repData)
   },
 
   reachedHooks() {
-
     this.setMessage('Take weight of bar')
   },
 
@@ -110,19 +140,34 @@ AFRAME.registerComponent('ui-updater', {
         this.state.repPhase = 'ready'
         this.setMessage('Ready!')
         this.playPrompt('#sound-here-we-go')
+        // track time, count this as "rest" start for rep 1
+        this.timestamps.finishedLast = Date.now()
         break
 
       case 'down':
         this.state.repPhase = 'rest'
         this.setMessage('Incomplete Rep')
         this.playPrompt('#sound-not-quite')
+
+        // Only report rep data if calibration completed...
+        this.repData.repNumber = this.state.repNumber
+        const targetDepth = this.el.sceneEl.components['bar-monitor'].data.targetDepth
+        this.repData.depth = this.state.minHeightThisRep - targetDepth
+        this.reportRep()
+
+        // wipe data about previous effort at depth.
+        this.state.minHeightThisRep = 1000
         break
 
       case 'up':
         this.state.repPhase = 'rest'
         this.setMessage('Rep Complete')
         this.repCompleted(true)
-        if (this.state.repsToGo === 1) {
+        if (this.state.repsToGo === 0) {
+          this.playPrompt('#sound-good-job')
+          this.state.shutUp = true
+        }
+        else if (this.state.repsToGo === 1) {
           this.playPrompt('#sound-last-one') 
         }
         else {
@@ -148,6 +193,20 @@ AFRAME.registerComponent('ui-updater', {
       case 'rest':
         this.state.repPhase = 'down'
         this.setMessage('Going down...')
+        this.timestamps.beganRep = Date.now()
+
+        // 1st set of data for new rep.
+        this.repData.repNumber = this.state.repNumber
+        this.repData.completed = false
+        this.repData.failed = false
+        this.repData.restPrior = this.timestamps.beganRep - this.timestamps.finishedLast
+        this.repData.timeDown = undefined
+        this.repData.depth = undefined
+        this.repData.timeUp = undefined
+        this.repData.turnSpeed = undefined
+        this.repData.deviationLR = undefined
+        this.repData.deviationFB = undefined
+        this.reportRep()
         break
 
       case 'up':
@@ -171,7 +230,12 @@ AFRAME.registerComponent('ui-updater', {
 
       case 'down':
         this.setMessage('Hit Depth!')
+        this.playSFX('#sfx-hit-depth')
         this.state.repPhase = 'up'
+        this.timestamps.hitDepth = Date.now()
+
+        this.repData.timeDown = this.timestamps.hitDepth - this.timestamps.beganRep
+        this.reportRep()
         break
   
       case 'up':
@@ -189,11 +253,15 @@ AFRAME.registerComponent('ui-updater', {
     switch (this.state.repPhase) {
 
       case 'up':
-        // expected.  No action / state change needed
+        // assume we now hit our lowest point.
+        const targetDepth = this.el.sceneEl.components['bar-monitor'].data.targetDepth
+        this.repData.depth = this.state.minHeightThisRep - targetDepth
+        this.reportRep()
+
         break
 
       default: 
-        console.error("Lowered From Top in unexpected state: ", this.state.repPhase)
+        console.error("Upwards from Target Depth in unexpected state: ", this.state.repPhase)
     }
   },
 
@@ -209,10 +277,39 @@ AFRAME.registerComponent('ui-updater', {
   },
 
   playPrompt(src) {
+
+    // don't play these clips until calibration is done.
+    const state = this.el.sceneEl.components['ui-manager'].state
+    if (!state.calibrated) return
+
+    // don't play clips when no reps remaining
+    if (this.state.shutUp) return
+
     const origin = document.getElementById('sound-origin')
 
     origin.removeAttribute('sound')
     origin.setAttribute('sound', {src: src, autoplay: true})
   },
+
+  playSFX(src) {
+
+    // don't play these clips until calibration is done.
+    const state = this.el.sceneEl.components['ui-manager'].state
+    if (!state.calibrated) return
+    
+    const origin = document.getElementById('sfx-origin')
+
+    origin.setAttribute('sound', {src: '', autoplay: false})
+    origin.setAttribute('sound', {src: src, autoplay: true})
+  },
+
+  tick() {
+    barPosition = this.el.sceneEl.components['bar-position'].barPosition
+
+    if (barPosition.y < this.state.minHeightThisRep) {
+      this.state.minHeightThisRep = barPosition.y
+      this.timestamps.hitBottom = Date.now() // should be accurate by end of rep!
+    }
+  }
 
 })
