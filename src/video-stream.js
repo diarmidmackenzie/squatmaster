@@ -19,7 +19,7 @@ if (!window.location.href.includes("phone.html")) {
     // Answer the call
     call.answer(null);
 
-    // Disable sending any media
+    // Display media in video element
     call.on('stream', stream => {
 
       const videoEl = document.getElementById("video1")
