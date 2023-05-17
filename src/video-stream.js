@@ -1,23 +1,33 @@
-require()
+/* global: Peer */
+import { Peer } from "peerjs";
 
-AFRAME.registerComponent('video-stream', {
+if (!window.location.href.includes("phone.html")) {
 
-  init() {
-    const peer = new Peer("squatmaster-oculus");
+  const peer = new Peer("squatmaster-oculus");
 
-    peer.on("call", (call) => {
-      navigator.mediaDevices.getUserMedia(
-        { video: true, audio: true },
-        (stream) => {
-          call.answer(stream); // Answer the call with an A/V stream.
-          call.on("stream", (remoteStream) => {
-            // Show stream in some <video> element.
-          });
-        },
-        (err) => {
-          console.error("Failed to get local stream", err);
-        },
-      );
+  peer.on("connection", (conn) => {
+    conn.on("data", (data) => {
+      // Will print 'hi!'
+      console.log(data);
     });
-  }
-})
+    conn.on("open", () => {
+      conn.send("hello!");
+    });
+  });
+
+  peer.on('call', call => {
+    // Answer the call
+    call.answer(null);
+
+    // Disable sending any media
+    call.on('stream', stream => {
+
+      const videoEl = document.getElementById("video1")
+
+      if (videoEl.srcObject !== stream) {
+        videoEl.srcObject = stream
+        videoEl.play()
+      }
+    });
+  });
+}

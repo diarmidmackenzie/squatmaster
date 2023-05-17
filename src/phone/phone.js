@@ -1,14 +1,25 @@
 /* global: Peer */
+import { Peer } from "peerjs";
 
-const peer = new Peer("squatmaster-phone");
+if (window.location.href.includes("phone.html")) {
+  const peer = new Peer();
 
-navigator.mediaDevices.getUserMedia(
-	{ video: true, audio: true },
-	(stream) => {
-		const call = peer.call("squatmaster-oculus", stream);
-	},
-	(err) => {
-		console.error("Failed to get local stream", err);
-	},
-);
+  const conn = peer.connect("squatmaster-oculus");
+  conn.on("open", () => {
+    conn.send("hi!");
+    console.log("Sending hi!")
+  });
+
+  navigator.mediaDevices.getUserMedia({video: true, audio: true})
+  .then((stream) => {
+    const videoEl  = document.getElementById('video-feed')
+    videoEl.srcObject = stream
+
+    let call = peer.call("squatmaster-oculus", stream);
+  })
+  .catch((err) => {
+    console.log('Failed to get local stream', err);
+  });
+
+}
 

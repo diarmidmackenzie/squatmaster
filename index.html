@@ -2,7 +2,6 @@
 <html>
   <head>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
     <script src="./dist/squatmaster.js"></script>
 
     <!-- URL parameters:
@@ -33,6 +32,7 @@
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
+    <video id="video1" autoplay src=""></video>
     <a-scene background="color: #88f"
              bar-position
              bar-monitor
@@ -77,7 +77,7 @@
         <audio id="sfx-hit-depth" src="./assets/sfx/target-depth.mp3" preload="auto"></audio>
         <audio id="sfx-welcome" src="./assets/sfx/welcome.mp3" preload="auto"></audio>
 
-        <video id="video1" autoplay='true' muted playsinline webkit-playsinline src="../assets/video/squat-video3.mp4" type="video/mp4"></video>
+        <video id="video1xx" muted playsinline webkit-playsinline src="" type="video/mp4"></video>
       </a-assets>
 
       <!-- default camera; no movement controls - not suitable for MR-->
