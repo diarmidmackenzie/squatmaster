@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="../src/xy-plot.js"></script>
+    <script>
+      
+      AFRAME.registerComponent('click-listener', {
+        events: {
+          'click': function (e) {
+            const button = e.detail.mouseEvent.button
+
+            if (button === 0) {
+              const plane = document.getElementById('plane')
+              const x = e.detail.intersection.uv.x
+              const y = e.detail.intersection.uv.y
+              plane.emit('plot-point', {x, y})
+            }
+            else if (button === 2) {
+              plane.emit('clear-plot')
+            }
+          }
+        },
+
+        init() {
+          // disable right-click menu
+          window.addEventListener('contextmenu', event => event.preventDefault());
+        }
+      })
+
+    </script>
+  </head>
+  <body>
+    <a-scene background="color: #88f">
+      <a-entity cursor="rayOrigin: mouse" raycaster="objects:#plane" click-listener></a-entity>
+      <a-plane id="plane" position="0 1.6 -1" xy-plot></a-plane>
+    </a-scene>
+  </body>
+</html>
