@@ -35,7 +35,11 @@ AFRAME.registerComponent('ui-updater', {
       repNumber: 0,
       repsToGo: 5,
       shutUp: false, // set to stop coaching on the set.
-      minHeightThisRep: 1000
+      minHeightThisRep: 1000,
+      fbDeviationThisRep: 0,
+      lrDeviationThisRep: 0,
+      repStartZ: 0,
+      repStartX: 0,
     }
 
     this.timestamps = {
@@ -49,6 +53,9 @@ AFRAME.registerComponent('ui-updater', {
     this.insideRackUI = document.querySelector('#inside-rack-ui')
     this.outsideRackUI = document.querySelector('#outside-rack-ui')
 
+    this.fbPath = document.querySelector('#fb-path')
+    this.lrPath = document.querySelector('#lr-path')
+
     this.repData = {
       repNumber: 0,
       completed: false,
@@ -58,9 +65,10 @@ AFRAME.registerComponent('ui-updater', {
       depth: undefined,
       timeUp: undefined,
       turnSpeed: undefined, // TO DO
-      deviationLR: undefined, // TO DO
-      deviationFB: undefined  // TO DO
+      deviationLR: 0,
+      deviationFB: 0
     }
+
   },
 
   remove() {
@@ -204,9 +212,19 @@ AFRAME.registerComponent('ui-updater', {
         this.repData.depth = undefined
         this.repData.timeUp = undefined
         this.repData.turnSpeed = undefined
-        this.repData.deviationLR = undefined
-        this.repData.deviationFB = undefined
+        this.repData.deviationLR = 0
+        this.repData.deviationFB = 0
         this.reportRep()
+
+        // clear path visualization.
+        this.fbPath.emit('clear-plot')
+        this.lrPath.emit('clear-plot')
+
+        const barPosition = this.el.sceneEl.components['bar-position'].barPosition
+        this.state.repStartZ = barPosition.z
+        this.state.repStartX = barPosition.x
+        this.state.fbDeviationThisRep = 0
+        this.state.lrDeviationThisRep = 0
         break
 
       case 'up':
@@ -304,12 +322,29 @@ AFRAME.registerComponent('ui-updater', {
   },
 
   tick() {
-    barPosition = this.el.sceneEl.components['bar-position'].barPosition
+    const state = this.state
+    const barPosition = this.el.sceneEl.components['bar-position'].barPosition
 
     if (barPosition.y < this.state.minHeightThisRep) {
-      this.state.minHeightThisRep = barPosition.y
+      state.minHeightThisRep = barPosition.y
       this.timestamps.hitBottom = Date.now() // should be accurate by end of rep!
     }
-  }
 
+    // update path visualizations.
+    const fbDeviation = -(barPosition.z - state.repStartZ)
+    const lrDeviation = barPosition.x - state.repStartX
+    
+    this.fbPath.emit('plot-point', {x: fbDeviation, y: barPosition.y})
+    this.lrPath.emit('plot-point', {x: lrDeviation, y: barPosition.y})
+
+    // update deviation tracking / reporting
+    state.fbDeviationThisRep = Math.max(state.fbDeviationThisRep, Math.abs(fbDeviation))
+    state.lrDeviationThisRep = Math.max(state.lrDeviationThisRep, Math.abs(lrDeviation))
+    if (this.repData.deviationFB !== state.fbDeviationThisRep ||
+        this.repData.deviationLR !== state.lrDeviationThisRep) {
+      this.repData.deviationFB = state.fbDeviationThisRep
+      this.repData.deviationLR = state.lrDeviationThisRep
+      this.reportRep()
+    }
+  }
 })

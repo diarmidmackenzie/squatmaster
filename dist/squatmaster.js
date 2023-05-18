@@ -7472,8 +7472,8 @@ AFRAME.registerComponent('inside-rack-ui', {
                                     depth: -data.depth * 100, // m -> cm, flip sign.
                                     timeUp: data.timeUp / 1000, // msecs -> secs
                                     turnSpeed: data.turnSpeed,
-                                    daviationLR: data.deviationLR, 
-                                    deviationFB: data.deviationFB})
+                                    deviationFB: data.deviationFB * 100, // m -> cm
+                                    deviationLR: data.deviationLR * 100}) // m -> cm
   }
 });
 
@@ -7481,20 +7481,22 @@ const reportStats = [
   {key: 'restPrior', label: 'Rest', units: 's'},
   {key: 'timeDown', label: 'Rest', units: 's'},
   {key: 'depth', label: 'Rest', units: 'cm'},
-  {key: 'timeUp', label: 'Rest', units: 's'}
+  {key: 'timeUp', label: 'Rest', units: 's'},
+  {key: 'deviationFB', label: 'Deviation F-B', units: 'cm'},
+  {key: 'deviationLR', label: 'Deviation L-R', units: 'cm'}
 ]
 
 AFRAME.registerComponent('rep-report', {
   schema: {
     repNumber: { type: 'number'},
     status: { type: 'string', default: 'todo'}, // one of: todo, doing, done, failed
-    restPrior: {type: 'number'},
-    timeDown: {type: 'number'},
-    depth: {type: 'number'},
-    timeUp: {type: 'number'},
-    turnSpeed: {type: 'number'},
-    deviationLR: {type: 'number'},
-    deviationFB: {type: 'number'}
+    restPrior: {type: 'number', default: undefined},
+    timeDown: {type: 'number', default: undefined},
+    depth: {type: 'number', default: undefined},
+    timeUp: {type: 'number', default: undefined},
+    turnSpeed: {type: 'number', default: undefined},
+    deviationFB: {type: 'number', default: undefined},
+    deviationLR: {type: 'number', default: undefined}
   }, 
 
   init() {
@@ -7543,7 +7545,7 @@ AFRAME.registerComponent('rep-report', {
     reportStats.forEach((stat, index) => {
       const {key, units} = stat
 
-      if (this.data[key]) {
+      if (this.data[key] || this.data[key] === 0) {
         const child = document.createElement('a-entity')
         child.setAttribute('rep-report-stat', {
           value: this.data[key],
@@ -7934,7 +7936,11 @@ AFRAME.registerComponent('ui-updater', {
       repNumber: 0,
       repsToGo: 5,
       shutUp: false, // set to stop coaching on the set.
-      minHeightThisRep: 1000
+      minHeightThisRep: 1000,
+      fbDeviationThisRep: 0,
+      lrDeviationThisRep: 0,
+      repStartZ: 0,
+      repStartX: 0,
     }
 
     this.timestamps = {
@@ -7948,6 +7954,9 @@ AFRAME.registerComponent('ui-updater', {
     this.insideRackUI = document.querySelector('#inside-rack-ui')
     this.outsideRackUI = document.querySelector('#outside-rack-ui')
 
+    this.fbPath = document.querySelector('#fb-path')
+    this.lrPath = document.querySelector('#lr-path')
+
     this.repData = {
       repNumber: 0,
       completed: false,
@@ -7957,9 +7966,10 @@ AFRAME.registerComponent('ui-updater', {
       depth: undefined,
       timeUp: undefined,
       turnSpeed: undefined, // TO DO
-      deviationLR: undefined, // TO DO
-      deviationFB: undefined  // TO DO
+      deviationLR: 0,
+      deviationFB: 0
     }
+
   },
 
   remove() {
@@ -8103,9 +8113,19 @@ AFRAME.registerComponent('ui-updater', {
         this.repData.depth = undefined
         this.repData.timeUp = undefined
         this.repData.turnSpeed = undefined
-        this.repData.deviationLR = undefined
-        this.repData.deviationFB = undefined
+        this.repData.deviationLR = 0
+        this.repData.deviationFB = 0
         this.reportRep()
+
+        // clear path visualization.
+        this.fbPath.emit('clear-plot')
+        this.lrPath.emit('clear-plot')
+
+        const barPosition = this.el.sceneEl.components['bar-position'].barPosition
+        this.state.repStartZ = barPosition.z
+        this.state.repStartX = barPosition.x
+        this.state.fbDeviationThisRep = 0
+        this.state.lrDeviationThisRep = 0
         break
 
       case 'up':
@@ -8203,14 +8223,31 @@ AFRAME.registerComponent('ui-updater', {
   },
 
   tick() {
-    barPosition = this.el.sceneEl.components['bar-position'].barPosition
+    const state = this.state
+    const barPosition = this.el.sceneEl.components['bar-position'].barPosition
 
     if (barPosition.y < this.state.minHeightThisRep) {
-      this.state.minHeightThisRep = barPosition.y
+      state.minHeightThisRep = barPosition.y
       this.timestamps.hitBottom = Date.now() // should be accurate by end of rep!
     }
-  }
 
+    // update path visualizations.
+    const fbDeviation = -(barPosition.z - state.repStartZ)
+    const lrDeviation = barPosition.x - state.repStartX
+    
+    this.fbPath.emit('plot-point', {x: fbDeviation, y: barPosition.y})
+    this.lrPath.emit('plot-point', {x: lrDeviation, y: barPosition.y})
+
+    // update deviation tracking / reporting
+    state.fbDeviationThisRep = Math.max(state.fbDeviationThisRep, Math.abs(fbDeviation))
+    state.lrDeviationThisRep = Math.max(state.lrDeviationThisRep, Math.abs(lrDeviation))
+    if (this.repData.deviationFB !== state.fbDeviationThisRep ||
+        this.repData.deviationLR !== state.lrDeviationThisRep) {
+      this.repData.deviationFB = state.fbDeviationThisRep
+      this.repData.deviationLR = state.lrDeviationThisRep
+      this.reportRep()
+    }
+  }
 })
 
 
@@ -8312,6 +8349,98 @@ if (!window.location.href.includes("phone.html")) {
   });
 }
 
+
+/***/ }),
+
+/***/ "./src/xy-plot.js":
+/*!************************!*\
+  !*** ./src/xy-plot.js ***!
+  \************************/
+/***/ (() => {
+
+AFRAME.registerComponent('xy-plot', {
+
+  schema: {
+    resolution: {default: 1024},
+    lineColor: {default: 'white'},
+    lineWidth: {default: 2},
+    xmin: {default: 0},
+    xmax: {default: 1},
+    ymin: {default: 0},
+    ymax: {default: 1},
+  },
+
+  events: {
+    'plot-point': function (e) {
+      this.addPoint(e.detail.x, e.detail.y)
+    },
+    'clear-plot': function () {
+      this.clear()
+    }
+  },
+
+  init() {
+
+    this.canvas = document.createElement('canvas')
+    const ctx = this.canvas.getContext("2d");
+    
+    this.canvasTexture = new THREE.CanvasTexture(this.canvas)
+    const mesh = this.el.getObject3D('mesh')
+    mesh.material.map = this.canvasTexture
+
+    this.points = []
+
+  },
+
+  update() {
+    this.canvas.width = this.data.resolution
+    this.canvas.height = this.data.resolution
+    this.canvasTexture.needsUpdate = true
+
+    const ctx = this.canvas.getContext("2d")
+    ctx.strokeStyle = this.data.lineColor
+    ctx.lineWidth = this.data.lineWidth
+
+  },
+
+  addPoint(x, y) {
+
+    const ctx = this.canvas.getContext("2d")
+
+    const data = this.data
+    const {xmin, ymin, resolution} = data
+    const xrange = data.xmax - xmin
+    const yrange = data.ymax - ymin
+
+    canvasX = resolution * (x - xmin) / xrange 
+    canvasY = this.canvas.height - (resolution * (y - ymin) / yrange)
+
+    const point = {x: canvasX, y: canvasY}
+    this.points.push(point)
+
+    const length = this.points.length
+    if (length > 1) {
+      const begin = this.points[length - 2]
+      const end = this.points[length - 1]
+      ctx.beginPath()
+      ctx.moveTo(begin.x, begin.y)
+      ctx.lineTo(end.x, end.y)
+      ctx.stroke()
+      this.canvasTexture.needsUpdate = true
+    }
+  },
+
+  clear() {
+
+    this.points.length = 0
+    
+    const canvas = this.canvas
+    const ctx = this.canvas.getContext("2d")
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    this.canvasTexture.needsUpdate = true
+
+  }
+})
 
 /***/ }),
 
@@ -11120,7 +11249,9 @@ __webpack_require__(/*! ./src/calibration-flow */ "./src/calibration-flow.js")
 __webpack_require__(/*! ./src/ui-manager */ "./src/ui-manager.js")
 __webpack_require__(/*! aframe-polygon-wireframe */ "./node_modules/aframe-polygon-wireframe/index.js")
 __webpack_require__(/*! ./src/video-stream.js */ "./src/video-stream.js")
+__webpack_require__(/*! ./src/xy-plot.js */ "./src/xy-plot.js")
 __webpack_require__(/*! ./src/phone/phone.js */ "./src/phone/phone.js")
+
 })();
 
 /******/ 	return __webpack_exports__;

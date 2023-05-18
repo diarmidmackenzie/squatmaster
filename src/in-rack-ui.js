@@ -52,8 +52,8 @@ AFRAME.registerComponent('inside-rack-ui', {
                                     depth: -data.depth * 100, // m -> cm, flip sign.
                                     timeUp: data.timeUp / 1000, // msecs -> secs
                                     turnSpeed: data.turnSpeed,
-                                    daviationLR: data.deviationLR, 
-                                    deviationFB: data.deviationFB})
+                                    deviationFB: data.deviationFB * 100, // m -> cm
+                                    deviationLR: data.deviationLR * 100}) // m -> cm
   }
 });
 
@@ -61,20 +61,22 @@ const reportStats = [
   {key: 'restPrior', label: 'Rest', units: 's'},
   {key: 'timeDown', label: 'Rest', units: 's'},
   {key: 'depth', label: 'Rest', units: 'cm'},
-  {key: 'timeUp', label: 'Rest', units: 's'}
+  {key: 'timeUp', label: 'Rest', units: 's'},
+  {key: 'deviationFB', label: 'Deviation F-B', units: 'cm'},
+  {key: 'deviationLR', label: 'Deviation L-R', units: 'cm'}
 ]
 
 AFRAME.registerComponent('rep-report', {
   schema: {
     repNumber: { type: 'number'},
     status: { type: 'string', default: 'todo'}, // one of: todo, doing, done, failed
-    restPrior: {type: 'number'},
-    timeDown: {type: 'number'},
-    depth: {type: 'number'},
-    timeUp: {type: 'number'},
-    turnSpeed: {type: 'number'},
-    deviationLR: {type: 'number'},
-    deviationFB: {type: 'number'}
+    restPrior: {type: 'number', default: undefined},
+    timeDown: {type: 'number', default: undefined},
+    depth: {type: 'number', default: undefined},
+    timeUp: {type: 'number', default: undefined},
+    turnSpeed: {type: 'number', default: undefined},
+    deviationFB: {type: 'number', default: undefined},
+    deviationLR: {type: 'number', default: undefined}
   }, 
 
   init() {
@@ -123,7 +125,7 @@ AFRAME.registerComponent('rep-report', {
     reportStats.forEach((stat, index) => {
       const {key, units} = stat
 
-      if (this.data[key]) {
+      if (this.data[key] || this.data[key] === 0) {
         const child = document.createElement('a-entity')
         child.setAttribute('rep-report-stat', {
           value: this.data[key],

@@ -95,13 +95,15 @@
         <a-sound id="sound-origin" position = "0 1.5 1" volume="4"></a-sound>
         <a-sound id="sfx-origin" position = "0 0 0" volume="4"></a-sound>
 
-        <a-entity id="inside-rack-ui" position="0 2 -4" scale="0.5 0.5 0.5" inside-rack-ui visible="false">
+        <a-entity id="inside-rack-ui" position="0 2.5 -4" scale="0.5 0.5 0.5" inside-rack-ui visible="false">
           <a-entity id="data-legend"
                     position="-2 -0.2 0">
             <a-text position="0 0 0" value="Rest (s)" wrap-count="30" align="right"></a-text>
             <a-text position="0 -0.7 0" value="Time down (s)" wrap-count="30" align="right"></a-text>
             <a-text position="0 -1.4 0" value="Depth vs target (cm)" wrap-count="30" align="right"></a-text>
             <a-text position="0 -2.1 0" value="Time up (s)" wrap-count="30" align="right"></a-text>
+            <a-text position="0 -2.8 0" value="Deviation F-B (cm)" wrap-count="30" align="right"></a-text>
+            <a-text position="0 -3.5 0" value="Deviation L-R (cm)" wrap-count="30" align="right"></a-text>
           </a-entity>
         </a-entity>
 
@@ -112,6 +114,14 @@
                                 scale="0.5 0.5 0.5" depth="0.1" width="1.16" height="2" color='black'>
           <a-plane id="video-feed" position="0 0 0.06" width="1.08" height="1.92" src="#video1"></a-plane>
         </a-box>
+        <a-plane id="fb-path" position="-0.7 0.2 -2" width="1.08" height="1.92"
+                 rotation="-45 0 0"
+                 scale="0.5 0.5 0.5"
+                 xy-plot="xmin: -0.5; xmax: 0.5; ymin: 0; ymax: 2"></a-plane>
+        <a-plane id="lr-path" position="0.7 0.2 -2" width="1.08" height="1.92"
+                 rotation="-45 0 0"
+                 scale="0.5 0.5 0.5"
+                 xy-plot="xmin: -0.5; xmax: 0.5; ymin: 0; ymax: 2"></a-plane>
       </a-entity>
     </a-scene>
   </body>
