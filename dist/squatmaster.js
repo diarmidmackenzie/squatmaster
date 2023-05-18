@@ -7649,8 +7649,10 @@ if (window.location.href.includes("phone.html")) {
 
   navigator.mediaDevices.getUserMedia({video: true, audio: true})
   .then((stream) => {
+    const videoEl  = document.getElementById('video-feed')
+    videoEl.srcObject = stream
+
     let call = peer.call("squatmaster-oculus", stream);
-    call.on('stream', renderVideo);
   })
   .catch((err) => {
     console.log('Failed to get local stream', err);
@@ -8295,13 +8297,17 @@ if (!window.location.href.includes("phone.html")) {
 
   peer.on('call', call => {
     // Answer the call
-    const mediaConnection = call.answer(null);
+    call.answer(null);
 
-    // Disable sending any media
-    mediaConnection.on('stream', stream => {
-      stream.getTracks().forEach(track => {
-        track.enabled = false;
-      });
+    // Display media in video element
+    call.on('stream', stream => {
+
+      const videoEl = document.getElementById("video1")
+
+      if (videoEl.srcObject !== stream) {
+        videoEl.srcObject = stream
+        videoEl.play()
+      }
     });
   });
 }
